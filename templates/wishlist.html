@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}My Wishlist — {{ brand_name }}{% endblock %}
+{% block extra_css %}
+<style>
+.wishlist-page{padding:2rem 0 4rem;}
+.wishlist-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;}
+.wishlist-header h1{font-family:'Playfair Display',serif;font-size:1.6rem;
+  font-weight:700;color:var(--secondary);}
+.wishlist-header__count{font-size:.875rem;color:var(--text-muted);font-weight:400;margin-left:.5rem;}
+.wishlist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.25rem;}
+.w-card{background:var(--white);border:1px solid var(--border-lt);border-radius:var(--radius);
+  overflow:hidden;display:flex;flex-direction:column;transition:box-shadow var(--t),transform var(--t);}
+.w-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);}
+.w-card__img{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--bg-alt);}
+.w-card__img img{width:100%;height:100%;object-fit:cover;transition:transform .5s;}
+.w-card:hover .w-card__img img{transform:scale(1.06);}
+.w-card__remove{position:absolute;top:.5rem;right:.5rem;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.9);border:none;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;color:#E91E8C;font-size:.8rem;box-shadow:0 1px 4px rgba(0,0,0,.1);
+  transition:all var(--t);}
+.w-card__remove:hover{background:#E91E8C;color:#fff;}
+.w-card__body{padding:.875rem;display:flex;flex-direction:column;gap:.3rem;flex:1;}
+.w-card__seller{font-size:.68rem;color:var(--primary);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
+.w-card__name{font-size:.875rem;font-weight:700;color:var(--text-dark);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.w-card__price{font-size:1rem;font-weight:800;color:var(--secondary);margin-top:.2rem;}
+.w-card__old-price{font-size:.8rem;text-decoration:line-through;color:var(--text-light);margin-left:.3rem;}
+.w-card__actions{display:flex;gap:.5rem;margin-top:.625rem;}
+.w-card__actions .btn{flex:1;font-size:.78rem;}
+.wishlist-empty{text-align:center;padding:5rem 2rem;}
+.wishlist-empty__icon{font-size:4rem;margin-bottom:1rem;opacity:.4;}
+.wishlist-empty h2{font-size:1.3rem;font-weight:700;color:var(--text-dark);margin-bottom:.5rem;}
+.wishlist-empty p{color:var(--text-muted);margin-bottom:1.5rem;}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container wishlist-page">
+
+  <div class="wishlist-header">
+    <h1>
+      <i class="fas fa-heart" style="color:#E91E8C;font-size:1.2rem;margin-right:.4rem;"></i>
+      My Wishlist
+      <span class="wishlist-header__count">
+        {% if items %}({{ items|length }} item{{ 's' if items|length != 1 }}){% endif %}
+      </span>
+    </h1>
+    <a href="{{ url_for('shop.index') }}" class="btn btn--outline btn--sm">
+      <i class="fas fa-th"></i> Browse Products
+    </a>
+  </div>
+
+  {% if items %}
+  <div class="wishlist-grid">
+    {% for item in items %}
+    {% set product = item.product %}
+    {% if product %}
+    <div class="w-card">
+      <!-- Image -->
+      <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="w-card__img">
+        {% if product.primary_image and product.primary_image != 'placeholder.jpg' %}
+        <img src="{{ url_for('static', filename='images/products/'~product.primary_image) }}"
+             alt="{{ product.name }}" loading="lazy">
+        {% else %}
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🧵</div>
+        {% endif %}
+
+        {% if product.is_on_sale %}
+        <div class="product-badge product-badge--sale">-{{ product.discount_percent }}%</div>
+        {% endif %}
+
+        <!-- Remove from wishlist -->
+        <form method="POST"
+              action="{{ url_for('wishlist.toggle', product_id=product.id) }}"
+              class="wishlist-remove-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="w-card__remove"
+                  title="Remove from wishlist"
+                  onclick="event.preventDefault();removeFromWishlist(this,{{ item.id }});">
+            <i class="fas fa-heart"></i>
+          </button>
+        </form>
+      </a>
+
+      <!-- Body -->
+      <div class="w-card__body">
+        {% if product.company %}
+        <div class="w-card__seller">{{ product.company.name }}</div>
+        {% endif %}
+        <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="w-card__name">
+          {{ product.name }}
+        </a>
+        <div>
+          <span class="w-card__price">{{ product.display_price | inr }}</span>
+          {% if product.is_on_sale %}
+          <span class="w-card__old-price">{{ product.price | inr }}</span>
+          {% endif %}
+        </div>
+        {% if product.min_order_qty and product.min_order_qty > 1 %}
+        <div class="product-card__moq">Min {{ product.min_order_qty }} pcs</div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="w-card__actions">
+          {% if product.in_stock %}
+          <form method="POST" action="{{ url_for('cart.add_to_cart', product_id=product.id) }}" style="flex:1;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="quantity" value="{{ product.min_order_qty or 1 }}">
+            <button type="submit" class="btn btn--primary btn--sm" style="width:100%;">
+              <i class="fas fa-cart-shopping"></i> Add to Cart
+            </button>
+          </form>
+          {% else %}
+          <span class="btn btn--ghost btn--sm" style="flex:1;cursor:not-allowed;opacity:.6;">
+            Out of Stock
+          </span>
+          {% endif %}
+          <form method="POST" action="{{ url_for('wishlist.toggle', product_id=product.id) }}" style="flex:0 0 auto;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn--ghost btn--sm" title="Remove">
+              <i class="fas fa-trash" style="color:var(--danger);"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="wishlist-empty">
+    <div class="wishlist-empty__icon">🤍</div>
+    <h2>Your wishlist is empty</h2>
+    <p>Save products you love by clicking the heart icon on any product card.</p>
+    <a href="{{ url_for('shop.index') }}" class="btn btn--primary btn--lg">
+      <i class="fas fa-shopping-bag"></i> Start Browsing
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function removeFromWishlist(btn, itemId) {
+  const card = btn.closest('.w-card');
+  card.style.opacity = '0';
+  card.style.transform = 'scale(.9)';
+  card.style.transition = 'all .3s';
+  const form = btn.closest('form');
+  setTimeout(() => {
+    form.submit();
+  }, 280);
+}
+</script>
+{% endblock %}

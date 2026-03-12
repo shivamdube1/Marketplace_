@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <div class="dashboard__sidebar">{% include 'company/_sidebar.html' %}</div>
+  <div class="dashboard__main">
+    <div class="dashboard__topbar">
+      <a href="{{ url_for('company.products') }}" class="btn btn--ghost btn--sm">← Back</a>
+      <h1>{{ title }}</h1>
+    </div>
+    <form method="POST" enctype="multipart/form-data" class="profile-form">
+      {{ form.hidden_tag() }}
+      <div class="form-section">
+        <h3>Basic Info</h3>
+        <div class="form-group">{{ form.name.label }} {{ form.name(class="form-control") }}{% if form.name.errors %}<div class="form-error">{{ form.name.errors[0] }}</div>{% endif %}</div>
+        <div class="form-group">{{ form.description.label }} {{ form.description(class="form-control", rows=4) }}{% if form.description.errors %}<div class="form-error">{{ form.description.errors[0] }}</div>{% endif %}</div>
+        <div class="form-group">{{ form.details.label }} {{ form.details(class="form-control", rows=3) }}</div>
+      </div>
+      <div class="form-section">
+        <h3>Pricing & Stock</h3>
+        <div class="form-row">
+          <div class="form-group">{{ form.price.label }} {{ form.price(class="form-control") }}{% if form.price.errors %}<div class="form-error">{{ form.price.errors[0] }}</div>{% endif %}</div>
+          <div class="form-group">{{ form.sale_price.label }} {{ form.sale_price(class="form-control") }}</div>
+          <div class="form-group">{{ form.stock.label }} {{ form.stock(class="form-control") }}{% if form.stock.errors %}<div class="form-error">{{ form.stock.errors[0] }}</div>{% endif %}</div>
+          <div class="form-group">{{ form.min_order_qty.label }} {{ form.min_order_qty(class="form-control") }}</div>
+        </div>
+        <div class="form-group">{{ form.sku.label }} {{ form.sku(class="form-control", placeholder="Optional: your internal code") }}</div>
+      </div>
+      <div class="form-section">
+        <h3>Fabric Details</h3>
+        <div class="form-row">
+          <div class="form-group">{{ form.fabric_type.label }} {{ form.fabric_type(class="form-control") }}</div>
+          <div class="form-group">{{ form.material.label }} {{ form.material(class="form-control") }}</div>
+          <div class="form-group">{{ form.color.label }} {{ form.color(class="form-control") }}</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">{{ form.size.label }} {{ form.size(class="form-control") }}</div>
+          <div class="form-group">{{ form.pattern.label }} {{ form.pattern(class="form-control") }}</div>
+          <div class="form-group">{{ form.thread_count.label }} {{ form.thread_count(class="form-control") }}</div>
+        </div>
+        <div class="form-group">{{ form.care_instructions.label }} {{ form.care_instructions(class="form-control") }}</div>
+      </div>
+      <div class="form-section">
+        <h3>Labels</h3>
+        <div class="form-checks">
+          <label class="form-check">{{ form.is_featured() }} {{ form.is_featured.label }}</label>
+          <label class="form-check">{{ form.is_new() }} {{ form.is_new.label }}</label>
+          <label class="form-check">{{ form.is_bestseller() }} {{ form.is_bestseller.label }}</label>
+        </div>
+      </div>
+      <div class="form-section">
+        <h3>Product Images</h3>
+        <div class="form-row">
+          <div class="form-group">{{ form.image.label }} {{ form.image(class="form-control-file") }}</div>
+          <div class="form-group">{{ form.image_2.label }} {{ form.image_2(class="form-control-file") }}</div>
+          <div class="form-group">{{ form.image_3.label }} {{ form.image_3(class="form-control-file") }}</div>
+          <div class="form-group">{{ form.image_4.label }} {{ form.image_4(class="form-control-file") }}</div>
+        </div>
+        {% if product and product.get_images() %}
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem;">
+          {% for img in product.get_images() %}
+          <img src="{{ url_for('static',filename='images/products/'~img) }}" width="80" height="80" style="object-fit:cover;border-radius:8px;border:1px solid #ddd;">
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn btn--primary btn--lg">{{ form.submit.label.text }}</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

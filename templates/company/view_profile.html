@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}{{ comp.name }} — Profile{% endblock %}
+{% block content %}
+<div class="container" style="padding:2rem 1rem;">
+
+  <!-- Banner -->
+  {% if comp.banner %}
+  <div class="company-banner" style="background-image:url('{{ url_for('static',filename='images/companies/'~comp.banner) }}')"></div>
+  {% else %}
+  <div class="company-banner company-banner--default"></div>
+  {% endif %}
+
+  <!-- Profile Card -->
+  <div class="company-profile-card">
+    <div class="company-profile-card__logo">
+      {% if comp.logo %}
+        <img src="{{ url_for('static', filename='images/companies/'~comp.logo) }}" alt="{{ comp.name }}">
+      {% else %}
+        <div class="logo-placeholder">{{ comp.name[0] }}</div>
+      {% endif %}
+    </div>
+    <div class="company-profile-card__info">
+      <h1>{{ comp.name }}
+        {% if comp.is_verified %}<span class="badge badge--verified">✓ Verified</span>{% else %}<span class="badge badge--pending">Pending Verification</span>{% endif %}
+      </h1>
+      {% if comp.tagline %}<p class="company-tagline">{{ comp.tagline }}</p>{% endif %}
+      <div class="company-meta">
+        {% if comp.city %}<span><i class="fas fa-map-marker-alt"></i> {{ comp.city }}{% if comp.state %}, {{ comp.state }}{% endif %}</span>{% endif %}
+        {% if comp.business_type %}<span><i class="fas fa-industry"></i> {{ comp.business_type }}</span>{% endif %}
+        {% if comp.established_year %}<span><i class="fas fa-calendar"></i> Est. {{ comp.established_year }}</span>{% endif %}
+        <span><i class="fas fa-boxes"></i> {{ comp.product_count }} Products</span>
+      </div>
+    </div>
+    <div class="company-profile-card__actions">
+      <a href="{{ url_for('company.edit_profile') }}" class="btn btn--primary">✏️ Edit Profile</a>
+      <a href="{{ url_for('company.products') }}" class="btn btn--outline">Manage Products</a>
+    </div>
+  </div>
+
+  <!-- Details Sections -->
+  <div class="profile-sections">
+    <div class="profile-section">
+      <h3>About</h3>
+      <p>{{ comp.description }}</p>
+    </div>
+
+    {% if comp.phone or comp.email or comp.website or comp.whatsapp %}
+    <div class="profile-section">
+      <h3>Contact</h3>
+      <div class="contact-grid">
+        {% if comp.phone %}<div><i class="fas fa-phone"></i> {{ comp.phone }}</div>{% endif %}
+        {% if comp.whatsapp %}<div><i class="fab fa-whatsapp"></i> {{ comp.whatsapp }}</div>{% endif %}
+        {% if comp.email %}<div><i class="fas fa-envelope"></i> {{ comp.email }}</div>{% endif %}
+        {% if comp.website %}<div><i class="fas fa-globe"></i> <a href="{{ comp.website }}" target="_blank">{{ comp.website }}</a></div>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if comp.full_address %}
+    <div class="profile-section">
+      <h3>Address</h3>
+      <p><i class="fas fa-map-marker-alt"></i> {{ comp.full_address }}</p>
+    </div>
+    {% endif %}
+
+    {% if comp.gst_number or comp.pan_number %}
+    <div class="profile-section">
+      <h3>Business Details</h3>
+      {% if comp.gst_number %}<p><strong>GST:</strong> {{ comp.gst_number }}</p>{% endif %}
+      {% if comp.pan_number %}<p><strong>PAN:</strong> {{ comp.pan_number }}</p>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if not comp.is_verified %}
+  <div class="alert alert--warning">
+    ⏳ Your company profile is under review. Admin will verify it shortly. Your products will be visible on the marketplace once verified.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

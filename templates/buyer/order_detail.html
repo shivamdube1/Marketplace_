@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block content %}
+<div class="container" style="max-width:860px;padding:2rem 1rem 3rem;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <a href="{{ url_for('buyer.orders') }}" style="font-size:.82rem;color:var(--primary);display:inline-flex;align-items:center;gap:.35rem;margin-bottom:.5rem;">
+        <i class="fas fa-arrow-left"></i> All Orders
+      </a>
+      <h1 style="font-size:1.35rem;font-weight:800;color:var(--secondary);">Order {{ order.order_number }}</h1>
+      <div style="font-size:.82rem;color:var(--text-muted);margin-top:.2rem;">
+        Placed {{ order.created_at.strftime('%d %B %Y at %I:%M %p') }}
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+      <span class="badge badge--{{
+        'success' if order.status=='delivered' else
+        'info'    if order.status in ['shipped','processing','confirmed'] else
+        'danger'  if order.status in ['cancelled','refunded'] else 'muted' }}"
+        style="font-size:.875rem;padding:.4rem 1rem;border-radius:20px;">
+        {{ order.status.replace('_',' ').title() }}
+      </span>
+      <a href="{{ url_for('tracking.track_order', order_number=order.order_number) }}"
+         class="btn btn--outline btn--sm">
+        <i class="fas fa-map-marker-alt"></i> Track Live
+      </a>
+    </div>
+  </div>
+
+  <!-- Tracking Timeline -->
+  <div class="chart-card" style="margin-bottom:1.5rem;">
+    <div class="chart-card__header"><h3>Order Progress</h3></div>
+    <div class="tracking-timeline">
+      {% for step in timeline %}
+      <div class="tracking-step tracking-step--{{ step.state }}">
+        <div class="tracking-step__dot"><span>{{ step.icon }}</span></div>
+        <div class="tracking-step__line"></div>
+        <div class="tracking-step__content">
+          <div class="tracking-step__label">{{ step.label }}</div>
+          <div class="tracking-step__desc">{{ step.desc }}</div>
+          {% if step.time %}
+          <div class="tracking-step__time">{{ step.time.strftime('%d %b %Y, %I:%M %p') }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if order.tracking_number %}
+    <div style="background:var(--bg-alt);border-radius:var(--radius-sm);padding:.75rem 1rem;margin-top:1rem;font-size:.83rem;">
+      <i class="fas fa-truck"></i> <strong>Tracking ID:</strong> {{ order.tracking_number }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Items + Summary -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
+    <!-- Items -->
+    <div class="chart-card">
+      <div class="chart-card__header"><h3>Items Ordered</h3></div>
+      {% for item in order.items %}
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.625rem 0;border-bottom:1px solid var(--border-lt);">
+        {% if item.product_image %}
+        <img src="{{ url_for('static', filename='images/products/'~item.product_image) }}"
+             style="width:52px;height:52px;object-fit:cover;border-radius:8px;flex-shrink:0;border:1px solid var(--border-lt);">
+        {% endif %}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            {{ item.product_name }}
+          </div>
+          <div style="font-size:.75rem;color:var(--text-muted);">Qty: {{ item.quantity }} × {{ item.price | inr }}</div>
+        </div>
+        <div style="font-weight:700;font-size:.9rem;flex-shrink:0;">{{ item.subtotal | inr }}</div>
+      </div>
+      {% endfor %}
+      <div style="margin-top:1rem;">
+        <form method="POST" action="{{ url_for('cart.add_multiple') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {% for item in order.items %}{% if item.product_id %}
+          <input type="hidden" name="product_ids" value="{{ item.product_id }}">
+          <input type="hidden" name="quantities" value="{{ item.quantity }}">
+          {% endif %}{% endfor %}
+          <button type="submit" class="btn btn--outline btn--sm" style="width:100%;">
+            <i class="fas fa-redo"></i> Buy Again
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="chart-card">
+      <div class="chart-card__header"><h3>Order Summary</h3></div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;">
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:var(--text-muted);">Subtotal</span>
+          <span>{{ order.subtotal | inr }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:var(--text-muted);">Shipping</span>
+          <span>{% if order.shipping_cost == 0 %}<span style="color:var(--success);">Free</span>{% else %}{{ order.shipping_cost | inr }}{% endif %}</span>
+        </div>
+        {% if order.tax %}
+        <div style="display:flex;justify-content:space-between;">
+          <span style="color:var(--text-muted);">Tax</span><span>{{ order.tax | inr }}</span>
+        </div>
+        {% endif %}
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;border-top:1.5px solid var(--border);padding-top:.625rem;margin-top:.25rem;">
+          <span>Total Paid</span><span style="color:var(--secondary);">{{ order.total | inr }}</span>
+        </div>
+        {% if order.payment_status == 'cod' or order.payment_status == 'pending' %}
+        <div class="cod-badge"><i class="fas fa-money-bill-wave"></i> Cash on Delivery</div>
+        {% elif order.razorpay_payment_id %}
+        <div style="font-size:.72rem;color:var(--text-muted);margin-top:.25rem;">
+          <i class="fas fa-check-circle" style="color:var(--success);"></i> Paid online · {{ order.razorpay_payment_id[:16] }}…
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Shipping address -->
+      <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-lt);">
+        <h4 style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.5rem;">
+          <i class="fas fa-map-marker-alt" style="color:var(--primary);"></i> Deliver To
+        </h4>
+        <div style="font-size:.82rem;color:var(--text-dark);line-height:1.7;">
+          <strong>{{ order.full_name }}</strong><br>
+          {{ order.address_line1 }}<br>
+          {% if order.address_line2 %}{{ order.address_line2 }}<br>{% endif %}
+          {{ order.city }}, {{ order.state }} {{ order.postal_code }}<br>
+          {{ order.country }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact seller -->
+  {% set seller_companies = [] %}
+  {% for item in order.items %}
+    {% if item.product and item.product.company and item.product.company not in seller_companies %}
+      {% set _ = seller_companies.append(item.product.company) %}
+    {% endif %}
+  {% endfor %}
+  {% if seller_companies %}
+  <div class="chart-card">
+    <div class="chart-card__header"><h3>Need Help?</h3></div>
+    <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:.875rem;">Contact the seller directly for queries about this order.</p>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+      {% for comp in seller_companies %}
+      <a href="{{ url_for('messages.new_thread') }}?company_id={{ comp.id }}"
+         class="btn btn--outline btn--sm">
+        <i class="fas fa-comment-dots"></i> Message {{ comp.name }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

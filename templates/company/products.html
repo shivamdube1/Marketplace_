@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}My Products{% endblock %}
+{% block content %}
+<div class="dashboard">
+  <div class="dashboard__sidebar">{% include 'company/_sidebar.html' %}</div>
+  <div class="dashboard__main">
+    <div class="dashboard__topbar">
+      <h1>My Products</h1>
+      <a href="{{ url_for('company.add_product') }}" class="btn btn--primary"><i class="fas fa-plus"></i> Add Product</a>
+    </div>
+    <form method="get" class="search-bar" style="margin-bottom:1.5rem;">
+      <input type="text" name="q" value="{{ q }}" placeholder="Search products..." class="form-control" style="max-width:320px;display:inline-block;">
+      <button type="submit" class="btn btn--outline">Search</button>
+    </form>
+    <table class="data-table">
+      <thead><tr><th>Image</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for p in products.items %}
+        <tr>
+          <td>{% if p.image %}<img src="{{ url_for('static',filename='images/products/'~p.image) }}" width="50" height="50" style="object-fit:cover;border-radius:6px;">{% else %}—{% endif %}</td>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.fabric_type or '—' }}</td>
+          <td>{{ p.display_price | inr }}{% if p.is_on_sale %} <small style="color:red;">-{{ p.discount_percent }}%</small>{% endif %}</td>
+          <td>{{ p.stock }}</td>
+          <td><span class="badge badge--{{ 'success' if p.is_active else 'muted' }}">{{ 'Active' if p.is_active else 'Unlisted' }}</span></td>
+          <td>
+            <a href="{{ url_for('company.edit_product', pid=p.id) }}" class="btn btn--xs btn--outline">✏️ Edit</a>
+            <form method="POST" action="{{ url_for('company.toggle_product', pid=p.id) }}" style="display:inline;">
+              {{ csrf_token() if csrf_token is defined else '' }}
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn--xs btn--ghost">{{ 'Unlist' if p.is_active else 'List' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" style="text-align:center;padding:2rem;">No products yet. <a href="{{ url_for('company.add_product') }}">Add your first product</a></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <!-- Pagination -->
+    {% if products.pages > 1 %}
+    <div class="pagination">
+      {% if products.has_prev %}<a href="?page={{ products.prev_num }}" class="btn btn--outline btn--sm">← Prev</a>{% endif %}
+      <span>Page {{ products.page }} of {{ products.pages }}</span>
+      {% if products.has_next %}<a href="?page={{ products.next_num }}" class="btn btn--outline btn--sm">Next →</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
