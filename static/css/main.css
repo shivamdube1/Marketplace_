@@ -890,3 +890,13 @@ canvas{display:block;width:100% !important}
 /* About page extra */
 .section-eyebrow{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;
   color:var(--primary);margin-bottom:.75rem;display:block;}
+
+/* ── Return request UI ──────────────────────────────────────────── */
+.btn--warning {
+  background: #F59E0B; color: #fff; border: none;
+}
+.btn--warning:hover { background: #D97706; color: #fff; }
+.badge--return {
+  background: #FEF3C7; color: #92400E;
+  border: 1px solid #F59E0B;
+}

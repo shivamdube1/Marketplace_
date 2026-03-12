@@ -13,11 +13,6 @@
       <div class="kpi-card__value">{{ current_user.orders.count() }}</div>
       <div class="kpi-card__label">Total Orders</div>
     </a>
-    <a href="{{ url_for('wishlist.view') }}" class="kpi-card" style="text-decoration:none;">
-      <div class="kpi-card__icon">❤️</div>
-      <div class="kpi-card__value">{{ wishlist_count }}</div>
-      <div class="kpi-card__label">Wishlist Items</div>
-    </a>
     <a href="{{ url_for('messages.inbox') }}"
        class="kpi-card {% if unread > 0 %}kpi-card--warn{% endif %}" style="text-decoration:none;">
       <div class="kpi-card__icon">💬</div>

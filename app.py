@@ -32,7 +32,6 @@ def create_app(config_name=None):
     from routes.ratings   import ratings_bp
     from routes.analytics import analytics_bp
     from routes.messaging import msg_bp
-    from routes.wishlist  import wishlist_bp
     from routes.buyer     import buyer_bp
     from routes.tracking  import tracking_bp
     from routes.delivery  import delivery_bp
@@ -47,7 +46,6 @@ def create_app(config_name=None):
     app.register_blueprint(ratings_bp,   url_prefix='/rate')
     app.register_blueprint(analytics_bp)
     app.register_blueprint(msg_bp)
-    app.register_blueprint(wishlist_bp)
     app.register_blueprint(buyer_bp)
     app.register_blueprint(tracking_bp)
     app.register_blueprint(delivery_bp)
@@ -66,16 +64,13 @@ def create_app(config_name=None):
 
         # Unread message count for navbar badge
         unread_messages = 0
-        wishlist_count  = 0
         try:
             if current_user.is_authenticated:
                 from models.messaging import MessageThread
-                from models.wishlist import WishlistItem
                 if current_user.is_customer:
                     unread_messages = db.session.query(
                         db.func.sum(MessageThread.unread_customer)
                     ).filter_by(customer_id=current_user.id).scalar() or 0
-                    wishlist_count  = WishlistItem.query.filter_by(user_id=current_user.id).count()
                 elif current_user.is_company and current_user.company:
                     unread_messages = db.session.query(
                         db.func.sum(MessageThread.unread_seller)
@@ -92,7 +87,6 @@ def create_app(config_name=None):
             'pending_companies_count': pending_companies_count,
             'now': __import__('datetime').datetime.utcnow(),
             'unread_messages':         int(unread_messages),
-            'wishlist_count':          wishlist_count,
         }
 
     @app.template_filter('inr')

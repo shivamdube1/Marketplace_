@@ -1,30 +1,80 @@
 {% extends 'base.html' %}
 {% block title %}Order {{ order.order_number }}{% endblock %}
+{% block extra_css %}
+<style>
+/* Return request panel */
+.return-panel {
+  background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+  border: 1.5px solid #F59E0B;
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.return-panel__title {
+  font-size: .9rem; font-weight: 800;
+  color: #92400E; margin-bottom: .3rem;
+  display: flex; align-items: center; gap: .4rem;
+}
+.return-panel__sub {
+  font-size: .78rem; color: #B45309; margin-bottom: 1rem;
+}
+.return-panel .form-control {
+  background: #fff; border-color: #F59E0B;
+  font-size: .875rem;
+}
+.return-deadline {
+  font-size: .72rem; color: #D97706;
+  margin-top: .5rem; font-weight: 600;
+}
+
+/* Status badge colours for returns */
+.badge--return  { background: #FEF3C7; color: #92400E; border: 1px solid #F59E0B; }
+
+/* Tracking step — return states */
+.tracking-step--active .tracking-step__dot {
+  background: var(--primary); border-color: var(--primary); color: #fff;
+}
+
+/* COD badge */
+.cod-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: #FEF3C7; color: #92400E;
+  border: 1px solid #FDE68A; border-radius: 20px;
+  font-size: .72rem; font-weight: 700; padding: .25rem .7rem;
+  margin-top: .5rem;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container" style="max-width:860px;padding:2rem 1rem 3rem;">
 
   <!-- Header -->
   <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
     <div>
-      <a href="{{ url_for('buyer.orders') }}" style="font-size:.82rem;color:var(--primary);display:inline-flex;align-items:center;gap:.35rem;margin-bottom:.5rem;">
+      <a href="{{ url_for('buyer.orders') }}"
+         style="font-size:.82rem;color:var(--primary);display:inline-flex;align-items:center;gap:.35rem;margin-bottom:.5rem;">
         <i class="fas fa-arrow-left"></i> All Orders
       </a>
-      <h1 style="font-size:1.35rem;font-weight:800;color:var(--secondary);">Order {{ order.order_number }}</h1>
+      <h1 style="font-size:1.35rem;font-weight:800;color:var(--secondary);">
+        Order {{ order.order_number }}
+      </h1>
       <div style="font-size:.82rem;color:var(--text-muted);margin-top:.2rem;">
         Placed {{ order.created_at.strftime('%d %B %Y at %I:%M %p') }}
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
       <span class="badge badge--{{
-        'success' if order.status=='delivered' else
-        'info'    if order.status in ['shipped','processing','confirmed'] else
-        'danger'  if order.status in ['cancelled','refunded'] else 'muted' }}"
+        'success'  if order.status == 'delivered' else
+        'return'   if order.status in ['return_requested','returned'] else
+        'info'     if order.status in ['shipped','processing','confirmed'] else
+        'danger'   if order.status in ['cancelled','refunded'] else 'muted' }}"
         style="font-size:.875rem;padding:.4rem 1rem;border-radius:20px;">
         {{ order.status.replace('_',' ').title() }}
       </span>
       <a href="{{ url_for('tracking.track_order', order_number=order.order_number) }}"
          class="btn btn--outline btn--sm">
-        <i class="fas fa-map-marker-alt"></i> Track Live
+        <i class="fas fa-map-marker-alt"></i> Live Tracking
       </a>
     </div>
   </div>
@@ -53,6 +103,51 @@
     </div>
     {% endif %}
   </div>
+
+  <!-- Return request panel (48-hour window) -->
+  {% if can_return %}
+  <div class="return-panel">
+    <div class="return-panel__title">
+      <i class="fas fa-undo-alt"></i> Request a Return
+    </div>
+    <div class="return-panel__sub">
+      Not satisfied with your order? You can request a return within 48 hours of delivery.
+    </div>
+    <form method="POST"
+          action="{{ url_for('buyer.request_return', order_number=order.order_number) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="margin-bottom:.75rem;">
+        <label class="form-label" style="font-size:.82rem;color:#92400E;font-weight:700;">
+          Reason for Return *
+        </label>
+        <textarea name="reason" class="form-control" rows="2"
+                  placeholder="e.g. Wrong size received / Product damaged / Not as described…"
+                  required></textarea>
+      </div>
+      <button type="submit" class="btn btn--warning btn--sm"
+              onclick="return confirm('Submit return request for order {{ order.order_number }}?')">
+        <i class="fas fa-undo-alt"></i> Submit Return Request
+      </button>
+    </form>
+    {% if return_deadline %}
+    <div class="return-deadline">
+      <i class="fas fa-clock"></i>
+      Return window closes: {{ return_deadline.strftime('%d %b %Y at %I:%M %p') }} IST
+    </div>
+    {% endif %}
+  </div>
+  {% elif order.status == 'return_requested' %}
+  <div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:var(--radius);
+              padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem;">
+    <i class="fas fa-clock" style="color:#F59E0B;font-size:1.2rem;flex-shrink:0;"></i>
+    <div>
+      <div style="font-weight:700;color:#92400E;font-size:.875rem;">Return Request Submitted</div>
+      <div style="font-size:.78rem;color:#B45309;margin-top:.15rem;">
+        The seller has been notified and will contact you within 24 hours.
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Items + Summary -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.25rem;">
@@ -98,28 +193,33 @@
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span style="color:var(--text-muted);">Shipping</span>
-          <span>{% if order.shipping_cost == 0 %}<span style="color:var(--success);">Free</span>{% else %}{{ order.shipping_cost | inr }}{% endif %}</span>
+          <span>{% if order.shipping_cost == 0 %}<span style="color:var(--success);">Free</span>
+          {% else %}{{ order.shipping_cost | inr }}{% endif %}</span>
         </div>
         {% if order.tax %}
         <div style="display:flex;justify-content:space-between;">
           <span style="color:var(--text-muted);">Tax</span><span>{{ order.tax | inr }}</span>
         </div>
         {% endif %}
-        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;border-top:1.5px solid var(--border);padding-top:.625rem;margin-top:.25rem;">
-          <span>Total Paid</span><span style="color:var(--secondary);">{{ order.total | inr }}</span>
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1rem;
+                    border-top:1.5px solid var(--border);padding-top:.625rem;margin-top:.25rem;">
+          <span>Total Paid</span>
+          <span style="color:var(--secondary);">{{ order.total | inr }}</span>
         </div>
-        {% if order.payment_status == 'cod' or order.payment_status == 'pending' %}
+        {% if order.payment_status in ('cod','pending') %}
         <div class="cod-badge"><i class="fas fa-money-bill-wave"></i> Cash on Delivery</div>
         {% elif order.razorpay_payment_id %}
         <div style="font-size:.72rem;color:var(--text-muted);margin-top:.25rem;">
-          <i class="fas fa-check-circle" style="color:var(--success);"></i> Paid online · {{ order.razorpay_payment_id[:16] }}…
+          <i class="fas fa-check-circle" style="color:var(--success);"></i>
+          Paid online
         </div>
         {% endif %}
       </div>
 
-      <!-- Shipping address -->
+      <!-- Delivery address -->
       <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border-lt);">
-        <h4 style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:.5rem;">
+        <h4 style="font-size:.78rem;font-weight:700;text-transform:uppercase;
+                   letter-spacing:.08em;color:var(--text-muted);margin-bottom:.5rem;">
           <i class="fas fa-map-marker-alt" style="color:var(--primary);"></i> Deliver To
         </h4>
         <div style="font-size:.82rem;color:var(--text-dark);line-height:1.7;">
@@ -143,7 +243,9 @@
   {% if seller_companies %}
   <div class="chart-card">
     <div class="chart-card__header"><h3>Need Help?</h3></div>
-    <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:.875rem;">Contact the seller directly for queries about this order.</p>
+    <p style="font-size:.875rem;color:var(--text-muted);margin-bottom:.875rem;">
+      Contact the seller directly for queries about this order.
+    </p>
     <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
       {% for comp in seller_companies %}
       <a href="{{ url_for('messages.new_thread') }}?company_id={{ comp.id }}"

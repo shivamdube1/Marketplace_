@@ -52,6 +52,7 @@ class Order(db.Model):
     notes           = db.Column(db.Text)
     tracking_number = db.Column(db.String(64))
     tracking_status = db.Column(db.String(64))           # human-readable tracking status
+    delivered_at    = db.Column(db.DateTime, nullable=True)   # when order was delivered
     tracking_events = db.Column(db.Text)                  # JSON list of tracking events
     estimated_delivery = db.Column(db.DateTime)
 
@@ -128,7 +129,8 @@ class OrderTracking(db.Model):
     STATUS_DELIVERED    = 'delivered'
     STATUS_ATTEMPTED    = 'delivery_attempted'
     STATUS_EXCEPTION    = 'exception'
-    STATUS_RETURNED     = 'returned'
+    STATUS_RETURN_REQUESTED = 'return_requested'
+    STATUS_RETURNED         = 'returned'
 
     STATUS_LABELS = {
         'pending':            'Order Placed',

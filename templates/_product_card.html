@@ -21,11 +21,6 @@
 
     <!-- Wishlist button -->
     {% if current_user.is_authenticated and current_user.is_customer %}
-    <button class="wishlist-btn {% if product.id in (wishlist_ids or []) %}wishlist-btn--active{% endif %}"
-            data-url="{{ url_for('wishlist.toggle', product_id=product.id) }}"
-            title="Save to wishlist" type="button">
-      <i class="{{ 'fas' if product.id in (wishlist_ids or []) else 'far' }} fa-heart"></i>
-    </button>
     {% endif %}
   </a>
 

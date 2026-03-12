@@ -397,8 +397,11 @@ def deliver_order(order_id):
     if order.status in ('delivered', 'cancelled', 'refunded'):
         flash(f'Order is already {order.status}.', 'warning')
         return redirect(url_for('company.orders'))
+    from datetime import datetime
     order.status = 'delivered'
     order.payment_status = 'paid'
+    if not order.delivered_at:
+        order.delivered_at = datetime.utcnow()
     OrderTracking.log(order_id=order.id, status='delivered',
                       message=f'Order delivered successfully.')
     db.session.commit()

@@ -112,7 +112,7 @@ def order_detail(assignment_id):
     order = assignment.order
     events = (OrderTracking.query
               .filter_by(order_id=order.id)
-              .order_by(OrderTracking.timestamp.desc()).limit(10).all())
+              .order_by(OrderTracking.timestamp.asc()).limit(10).all())
 
     return render_template('delivery/order_detail.html',
                            partner=partner,
@@ -141,15 +141,6 @@ def update_status(assignment_id):
         return redirect(url_for('delivery.order_detail', assignment_id=assignment_id))
 
     order = assignment.order
-
-    # OTP verification for delivery confirmation
-    if new_status == 'delivered':
-        entered_otp = request.form.get('otp', '').strip()
-        if assignment.otp and entered_otp != assignment.otp:
-            flash('Incorrect OTP. Please ask the customer for the 6-digit code.', 'danger')
-            return redirect(url_for('delivery.order_detail', assignment_id=assignment_id))
-        if assignment.otp:
-            assignment.otp_verified = True
 
     # Map assignment status → order tracking status
     tracking_status_map = {
@@ -199,12 +190,8 @@ def update_status(assignment_id):
     if new_status == 'delivered':
         partner.total_deliveries += 1
         partner.status = DeliveryPartner.STATUS_AVAILABLE
-        # Award loyalty points
-        try:
-            from routes.buyer import award_loyalty_points
-            award_loyalty_points(order)
-        except Exception:
-            pass
+        if not order.delivered_at:
+            order.delivered_at = datetime.utcnow()
 
     db.session.commit()
     flash(f'Order {order.order_number} → {assignment.label}', 'success')
@@ -290,12 +277,10 @@ def claim_order(order_id):
         flash('This order was already claimed by another rider.', 'warning')
         return redirect(url_for('delivery.available_orders'))
 
-    otp = DeliveryAssignment.generate_otp()
     assignment = DeliveryAssignment(
         order_id=order.id,
         partner_id=partner.id,
         status='assigned',
-        otp=otp,
         assigned_at=datetime.utcnow(),
     )
     db.session.add(assignment)
@@ -309,24 +294,9 @@ def claim_order(order_id):
     partner.status = 'busy'
     db.session.commit()
 
-    flash(f'Order {order.order_number} claimed! OTP sent to customer.', 'success')
+    flash(f'Order {order.order_number} claimed successfully!', 'success')
     return redirect(url_for('delivery.order_detail', assignment_id=assignment.id))
 
-
-# ── OTP Generate (called before delivery) ────────────────────────────────────
-
-@delivery_bp.route('/order/<int:assignment_id>/generate-otp', methods=['POST'])
-@delivery_required
-def generate_otp(assignment_id):
-    partner    = _get_partner()
-    assignment = DeliveryAssignment.query.get_or_404(assignment_id)
-    if assignment.partner_id != partner.id and not current_user.is_admin:
-        abort(403)
-    assignment.otp = DeliveryAssignment.generate_otp()
-    db.session.commit()
-    # In production: send OTP via SMS to customer
-    return jsonify({'success': True, 'otp': assignment.otp,
-                    'message': f'OTP generated: {assignment.otp}'})
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────
@@ -377,7 +347,6 @@ def admin_assign():
     assignment = DeliveryAssignment(
         order_id   = order_id,
         partner_id = partner_id,
-        otp        = DeliveryAssignment.generate_otp(),
     )
     db.session.add(assignment)
 
@@ -391,5 +360,5 @@ def admin_assign():
     order.status = 'shipped'
     db.session.commit()
 
-    flash(f'Order {order.order_number} assigned to {partner.user.full_name}. OTP: {assignment.otp}', 'success')
+    flash(f'Order {order.order_number} assigned to {partner.user.full_name}.', 'success')
     return redirect(request.referrer or url_for('admin.orders'))

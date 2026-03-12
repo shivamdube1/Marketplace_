@@ -1,15 +1,17 @@
 """
 Buyer dashboard — order history, order detail with tracking timeline,
-and account settings. (Loyalty points removed)
+and account settings.
 """
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required, current_user
 from extensions import db
-from models.order import Order
-from models.wishlist import WishlistItem
+from models.order import Order, OrderTracking
 from models.messaging import MessageThread
 
 buyer_bp = Blueprint('buyer', __name__)
+
+RETURN_WINDOW_HOURS = 48   # 2-day return window after delivery
 
 
 def _require_customer():
@@ -28,10 +30,7 @@ def dashboard():
     orders = current_user.orders.order_by(Order.created_at.desc()).limit(5).all()
     unread = db.session.query(db.func.sum(MessageThread.unread_customer)).filter_by(
         customer_id=current_user.id).scalar() or 0
-    wishlist_count = WishlistItem.query.filter_by(user_id=current_user.id).count()
-    return render_template('buyer/dashboard.html',
-                           orders=orders, unread=int(unread),
-                           wishlist_count=wishlist_count)
+    return render_template('buyer/dashboard.html', orders=orders, unread=int(unread))
 
 
 # ── Orders ─────────────────────────────────────────────────────────────────────
@@ -58,7 +57,62 @@ def order_detail(order_number):
     order = Order.query.filter_by(
         order_number=order_number, user_id=current_user.id).first_or_404()
     timeline = _build_timeline(order)
-    return render_template('buyer/order_detail.html', order=order, timeline=timeline)
+
+    # Return window: 48 hrs after delivered_at (or updated_at fallback)
+    can_return = False
+    return_deadline = None
+    if order.status == 'delivered':
+        ref_time = order.delivered_at or order.updated_at
+        return_deadline = ref_time + timedelta(hours=RETURN_WINDOW_HOURS)
+        can_return = datetime.utcnow() < return_deadline
+
+    return render_template('buyer/order_detail.html',
+                           order=order, timeline=timeline,
+                           can_return=can_return,
+                           return_deadline=return_deadline)
+
+
+# ── Request Return ─────────────────────────────────────────────────────────────
+
+@buyer_bp.route('/account/orders/<order_number>/return', methods=['POST'])
+@login_required
+def request_return(order_number):
+    r = _require_customer()
+    if r: return r
+
+    order = Order.query.filter_by(
+        order_number=order_number, user_id=current_user.id).first_or_404()
+
+    # Validate eligibility
+    if order.status != 'delivered':
+        flash('Only delivered orders can be returned.', 'warning')
+        return redirect(url_for('buyer.order_detail', order_number=order_number))
+
+    ref_time = order.delivered_at or order.updated_at
+    deadline = ref_time + timedelta(hours=RETURN_WINDOW_HOURS)
+    if datetime.utcnow() > deadline:
+        flash('The 48-hour return window for this order has expired.', 'danger')
+        return redirect(url_for('buyer.order_detail', order_number=order_number))
+
+    reason = request.form.get('reason', '').strip()
+    if not reason:
+        flash('Please provide a reason for the return.', 'warning')
+        return redirect(url_for('buyer.order_detail', order_number=order_number))
+
+    # Update order status
+    order.status = Order.STATUS_RETURN_REQUESTED
+
+    # Log tracking event
+    OrderTracking.log(
+        order_id=order.id,
+        status='returned',
+        message=f'Return requested by customer. Reason: {reason}',
+        created_by=current_user.id,
+    )
+    db.session.commit()
+
+    flash('Your return request has been submitted. The seller will contact you within 24 hours.', 'success')
+    return redirect(url_for('buyer.order_detail', order_number=order_number))
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -72,9 +126,12 @@ def _build_timeline(order):
         ('delivered',  '📦', 'Delivered',          'Order successfully delivered'),
     ]
     current_status = order.status
+    # Treat return_requested as delivered for timeline display
+    display_status = 'delivered' if current_status in ('return_requested', 'returned') else current_status
+
     status_order = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
     try:
-        current_idx = status_order.index(current_status)
+        current_idx = status_order.index(display_status)
     except ValueError:
         current_idx = -1
 
@@ -86,9 +143,10 @@ def _build_timeline(order):
             state = 'done' if status == 'pending' else ('refunded' if status == 'confirmed' else 'pending')
         else:
             state = 'done' if i < current_idx else ('active' if i == current_idx else 'pending')
+        time_val = order.created_at if status == 'pending' else (
+            order.delivered_at if status == 'delivered' and order.delivered_at else None)
         timeline.append({'status': status, 'icon': icon, 'label': label,
-                         'desc': desc, 'state': state,
-                         'time': order.created_at if status == 'pending' else None})
+                         'desc': desc, 'state': state, 'time': time_val})
 
     if current_status == 'cancelled':
         timeline.append({'status': 'cancelled', 'icon': '❌', 'label': 'Cancelled',
@@ -97,5 +155,13 @@ def _build_timeline(order):
     elif current_status == 'refunded':
         timeline.append({'status': 'refunded', 'icon': '💸', 'label': 'Refunded',
                          'desc': 'Refund has been processed',
+                         'state': 'done', 'time': order.updated_at})
+    elif current_status == 'return_requested':
+        timeline.append({'status': 'return_requested', 'icon': '↩️', 'label': 'Return Requested',
+                         'desc': 'Your return request is being reviewed',
+                         'state': 'active', 'time': order.updated_at})
+    elif current_status == 'returned':
+        timeline.append({'status': 'returned', 'icon': '↩️', 'label': 'Returned',
+                         'desc': 'Order has been returned to the seller',
                          'state': 'done', 'time': order.updated_at})
     return timeline

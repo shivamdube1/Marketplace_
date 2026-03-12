@@ -22,27 +22,53 @@ tracking_bp = Blueprint('tracking', __name__)
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
-# Full pipeline of statuses in order (for progress bar)
+# ── Unified pipeline ──────────────────────────────────────────────────────────
+# These are the 6 DISPLAY steps shown in the progress bar.
+# They map from order.status (5 values) + granular tracking events.
 PIPELINE = [
     'pending',
     'confirmed',
     'processing',
-    'packed',
-    'handed_to_courier',
-    'in_transit',
-    'out_for_delivery',
+    'shipped',        # covers: packed, handed_to_courier, in_transit, out_for_delivery
     'delivered',
 ]
 
-NEGATIVE_STATUSES = {'cancelled', 'refunded', 'returned', 'exception'}
+# Maps granular tracking event status → order.status for progress bar
+TRACKING_TO_ORDER_STATUS = {
+    'pending':             'pending',
+    'confirmed':           'confirmed',
+    'processing':          'processing',
+    'packed':              'processing',
+    'handed_to_courier':   'shipped',
+    'in_transit':          'shipped',
+    'out_for_delivery':    'shipped',
+    'delivered':           'delivered',
+    'delivery_attempted':  'shipped',
+    'exception':           'shipped',
+    'returned':            'returned',
+}
+
+NEGATIVE_STATUSES = {'cancelled', 'refunded', 'returned', 'return_requested', 'exception'}
+
+# Labels for display steps
+PIPELINE_LABELS = {
+    'pending':    ('🛒', 'Order Placed'),
+    'confirmed':  ('✅', 'Confirmed'),
+    'processing': ('⚙️',  'Preparing'),
+    'shipped':    ('🚚', 'Out for Delivery'),
+    'delivered':  ('🎉', 'Delivered'),
+}
 
 def _progress(order):
-    """Return (step_index 0-based, total_steps, pct) for the progress bar."""
+    """Return (step_index 0-based, total_steps, pct) for the progress bar.
+    Works correctly for both order.status and tracking event statuses."""
     status = order.status
     if status in NEGATIVE_STATUSES:
         return 0, len(PIPELINE), 0
+    # Map tracking-granular status → pipeline status
+    mapped = TRACKING_TO_ORDER_STATUS.get(status, status)
     try:
-        idx = PIPELINE.index(status)
+        idx = PIPELINE.index(mapped)
     except ValueError:
         idx = 0
     pct = round((idx / (len(PIPELINE) - 1)) * 100)
@@ -129,6 +155,7 @@ def track_order(order_number):
                            order=order,
                            events=events,
                            pipeline=PIPELINE,
+                           pipeline_labels=PIPELINE_LABELS,
                            progress_idx=idx,
                            progress_pct=pct,
                            is_negative=is_negative,
@@ -188,9 +215,11 @@ def api_update_status():
         'handed_to_courier': 'shipped', 'in_transit': 'shipped',
         'out_for_delivery': 'shipped', 'delivered': 'delivered',
         'delivery_attempted': 'shipped', 'exception': 'shipped',
-        'returned': 'cancelled',
+        'returned': 'returned',
     }
     order.status = order_status_map.get(status, status)
+    if order.status == 'delivered' and not order.delivered_at:
+        order.delivered_at = datetime.utcnow()
 
     # Estimated delivery
     if data.get('estimated_delivery'):
@@ -227,7 +256,7 @@ def admin_track(oid):
     order  = Order.query.get_or_404(oid)
     events = (OrderTracking.query
               .filter_by(order_id=oid)
-              .order_by(OrderTracking.timestamp.desc()).all())
+              .order_by(OrderTracking.timestamp.asc()).all())
     idx, total_steps, pct = _progress(order)
     all_statuses = list(OrderTracking.STATUS_LABELS.items())
     return render_template('tracking/admin_track.html',
@@ -291,6 +320,9 @@ def admin_add_event(oid):
         }
         old = order.status
         order.status = order_status_map.get(status, order.status)
+        if order.status == 'delivered' and not order.delivered_at:
+            from datetime import datetime as _dt
+            order.delivered_at = _dt.utcnow()
     db.session.commit()
     flash(f'Tracking event "{event.label}" added to order {order.order_number}.', 'success')
     return redirect(url_for('tracking.admin_track', oid=oid))

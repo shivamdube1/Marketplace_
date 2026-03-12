@@ -9,7 +9,7 @@
   <div style="padding:.75rem 1rem .25rem;">
     <a href="{{ url_for('delivery.dashboard') }}"
        style="font-size:.82rem;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:.3rem;">
-      <i class="fas fa-chevron-left"></i> Back
+      <i class="fas fa-chevron-left"></i> Back to Dashboard
     </a>
   </div>
 
@@ -29,8 +29,6 @@
         {{ order.address_line1 }}{% if order.address_line2 %}, {{ order.address_line2 }}{% endif %}<br>
         {{ order.city }}, {{ order.state }} – {{ order.postal_code }}
       </div>
-
-      <!-- Phone + Maps -->
       {% if order.phone %}
       <div style="display:flex;gap:.6rem;margin-top:.75rem;">
         <a href="tel:{{ order.phone }}" class="btn btn--green btn--sm" style="flex:1;">
@@ -44,23 +42,6 @@
       {% endif %}
     </div>
   </div>
-
-  <!-- OTP section -->
-  {% if assignment.status in ['out_for_delivery','assigned'] %}
-  <div style="margin:0 1rem .875rem;">
-    {% if assignment.otp %}
-    <div class="otp-box" style="text-align:center;">
-      <div style="font-size:.75rem;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.06em;">Delivery Confirmation</div>
-      <div style="font-size:.95rem;font-weight:600;">Ask customer for their 6-digit OTP</div>
-    </div>
-    {% else %}
-    <button onclick="generateOTP({{ assignment.id }})"
-            class="btn btn--outline btn--full">
-      <i class="fas fa-key"></i> Generate Delivery OTP
-    </button>
-    {% endif %}
-  </div>
-  {% endif %}
 
   <!-- Order items -->
   <div style="margin:0 1rem .875rem;">
@@ -94,7 +75,7 @@
   <div style="margin:0 1rem .875rem;">
     <div class="card card--pad">
       <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:.875rem;">
-        Update Status
+        Update Delivery Status
       </div>
 
       <form method="POST" action="{{ url_for('delivery.update_status', assignment_id=assignment.id) }}">
@@ -125,7 +106,7 @@
 
         <!-- Location -->
         <div class="field">
-          <label>Current Location (optional)</label>
+          <label>Current Location <span style="font-weight:400;color:var(--gray-400);">(optional)</span></label>
           <input type="text" name="location"
                  placeholder="e.g. Andheri West, Mumbai"
                  value="{{ partner.area or '' }}">
@@ -133,27 +114,21 @@
 
         <!-- Notes -->
         <div class="field">
-          <label>Notes for this update</label>
+          <label>Notes <span style="font-weight:400;color:var(--gray-400);">(optional)</span></label>
           <textarea name="notes" rows="2"
                     placeholder="e.g. Left with neighbour in flat 302"></textarea>
         </div>
 
-        <!-- Delivered section with OTP -->
+        <!-- Delivered section (no OTP) -->
         {% if assignment.status == 'out_for_delivery' %}
         <div style="background:var(--gray-50);border:2px solid var(--green);border-radius:12px;padding:1rem;margin-top:.5rem;">
           <div style="font-size:.8rem;font-weight:700;color:var(--green);margin-bottom:.75rem;">
-            <i class="fas fa-check-circle"></i> Mark as Delivered
+            <i class="fas fa-check-circle"></i> Confirm Delivery
           </div>
-          {% if assignment.otp %}
-          <div class="field" style="margin-bottom:.75rem;">
-            <label>Enter Customer OTP *</label>
-            <input type="text" name="otp" placeholder="6-digit OTP"
-                   maxlength="6" inputmode="numeric"
-                   style="font-size:1.5rem;font-weight:800;letter-spacing:.3em;text-align:center;">
-          </div>
-          {% endif %}
-          <button type="submit" name="status" value="delivered" class="btn btn--green btn--full">
-            <i class="fas fa-check"></i> Confirm Delivery
+          <button type="submit" name="status" value="delivered"
+                  class="btn btn--green btn--full"
+                  onclick="return confirm('Confirm delivery of this order?')">
+            <i class="fas fa-check"></i> Mark as Delivered
           </button>
         </div>
         {% endif %}
@@ -176,20 +151,20 @@
   </div>
   {% endif %}
 
-  <!-- Recent tracking events -->
+  <!-- Tracking events (chronological — oldest first) -->
   {% if events %}
   <div style="margin:0 1rem 2rem;">
     <div class="card card--pad">
-      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:.75rem;">
-        Recent Activity
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:.875rem;">
+        Tracking History
       </div>
       <div class="mini-timeline">
-        {% for e in events %}
-        <div class="mini-event">
+        {% for e in events | reverse %}
+        <div class="mini-event {% if loop.last %}mini-event--latest{% endif %}">
           <div class="mini-event__dot"></div>
           <div class="mini-event__body">
-            <div class="mini-event__status">{{ e.label }} {{ '· '~e.location if e.location }}</div>
-            <div class="mini-event__time">{{ e.timestamp.strftime('%d %b, %I:%M %p') }}</div>
+            <div class="mini-event__status">{{ e.label }}{% if e.location %} · {{ e.location }}{% endif %}</div>
+            <div class="mini-event__time">{{ e.timestamp.strftime('%d %b %Y, %I:%M %p') }}</div>
           </div>
         </div>
         {% endfor %}
@@ -199,22 +174,4 @@
   {% endif %}
 
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function generateOTP(assignmentId) {
-  fetch(`/delivery/order/${assignmentId}/generate-otp`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
-    }
-  })
-  .then(r => r.json())
-  .then(d => {
-    if (d.success) window.location.reload();
-  });
-}
-</script>
 {% endblock %}

@@ -98,10 +98,6 @@
             {% elif current_user.is_customer %}
               <a href="{{ url_for('buyer.dashboard') }}"  role="menuitem"><i class="fas fa-user" aria-hidden="true"></i> My Account</a>
               <a href="{{ url_for('buyer.orders') }}"     role="menuitem"><i class="fas fa-box" aria-hidden="true"></i> My Orders</a>
-              <a href="{{ url_for('wishlist.view') }}"    role="menuitem">
-                <i class="fas fa-heart" aria-hidden="true"></i> Wishlist
-                {% if wishlist_count > 0 %}<span class="nav-badge nav-badge--sm nav-badge--pink">{{ wishlist_count }}</span>{% endif %}
-              </a>
               <a href="{{ url_for('messages.inbox') }}"   role="menuitem">
                 <i class="fas fa-comment-dots" aria-hidden="true"></i> Messages
                 {% if unread_messages > 0 %}<span class="nav-badge nav-badge--sm">{{ unread_messages }}</span>{% endif %}
@@ -126,10 +122,6 @@
       <a href="{{ url_for('messages.inbox') }}" class="navbar__icon-btn" title="Messages" aria-label="Messages">
         <i class="fas fa-comment-dots" aria-hidden="true"></i>
         {% if unread_messages > 0 %}<span class="nav-badge" aria-label="{{ unread_messages }} unread">{{ unread_messages }}</span>{% endif %}
-      </a>
-      <a href="{{ url_for('wishlist.view') }}" class="navbar__icon-btn" title="Wishlist" aria-label="Wishlist">
-        <i class="fas fa-heart" aria-hidden="true"></i>
-        {% if wishlist_count > 0 %}<span class="nav-badge nav-badge--pink" aria-label="{{ wishlist_count }} saved">{{ wishlist_count }}</span>{% endif %}
       </a>
       {% endif %}
       {% if not current_user.is_company and not current_user.is_admin %}

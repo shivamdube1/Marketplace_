@@ -300,25 +300,24 @@
           <div class="progress-track">
             <div class="progress-fill" style="width: {{ progress_pct }}%;"></div>
           </div>
-          {% set step_labels = {
-            'pending':           '🛒\nPlaced',
-            'confirmed':         '✅\nConfirmed',
-            'processing':        '⚙️\nPreparing',
-            'in_transit':        '🚀\nIn Transit',
-            'out_for_delivery':  '🚚\nOut for\nDelivery',
-            'delivered':         '🎉\nDelivered'
-          } %}
-          {% set visible_steps = ['pending','confirmed','processing','in_transit','out_for_delivery','delivered'] %}
-          {% for step in visible_steps %}
+          {# pipeline = ['pending','confirmed','processing','shipped','delivered'] #}
+          {% set step_meta = [
+            ('pending',    '🛒', 'Placed'),
+            ('confirmed',  '✅', 'Confirmed'),
+            ('processing', '⚙️',  'Preparing'),
+            ('shipped',    '🚚', 'Shipped'),
+            ('delivered',  '🎉', 'Delivered')
+          ] %}
+          {% for step, icon, label in step_meta %}
           {% set step_idx = pipeline.index(step) if step in pipeline else 0 %}
           {% set state = 'done' if step_idx < progress_idx else ('active' if step_idx == progress_idx else 'pending') %}
           <div class="progress-step progress-step--{{ state }}">
             <div class="progress-step__dot">
-              {% if state == 'done' %}✓{% else %}{{ loop.index }}{% endif %}
+              {% if state == 'done' %}<i class="fas fa-check" style="font-size:.6rem;"></i>
+              {% elif state == 'active' %}{{ icon }}
+              {% else %}{{ loop.index }}{% endif %}
             </div>
-            <div class="progress-step__label">
-              {{ step_labels[step].split('\n')[1:] | join(' ') }}
-            </div>
+            <div class="progress-step__label">{{ label }}</div>
           </div>
           {% endfor %}
         </div>
@@ -358,8 +357,8 @@
 
         {% if events %}
         <div class="timeline">
-          {% for event in events | reverse %}
-          <div class="timeline-event {% if loop.first %}timeline-event--latest{% endif %}">
+          {% for event in events %}
+          <div class="timeline-event {% if loop.last %}timeline-event--latest{% endif %}">
             <div class="timeline-event__dot">{{ event.icon }}</div>
             <div class="timeline-event__header">
               <div class="timeline-event__status">{{ event.label }}</div>
