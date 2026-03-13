@@ -29,7 +29,7 @@
       <div class="cart-row__product">
         <a href="{{ url_for('shop.product_detail', slug=product.slug) }}" class="cart-row__img">
           <img src="{{ url_for('static', filename=img_path) }}" alt="{{ product.name }}"
-               onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'" />
+               onerror="this.src='{{ url_for('static', filename='images/placeholder.jpg') }}'" loading="lazy">
         </a>
         <div class="cart-row__details">
           <h4><a href="{{ url_for('shop.product_detail', slug=product.slug) }}">{{ product.name }}</a></h4>

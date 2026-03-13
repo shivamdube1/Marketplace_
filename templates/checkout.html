@@ -168,7 +168,7 @@
           {% for ci in cart_items %}
           <div class="summary-item">
             <img src="{{ url_for('static', filename='images/products/' ~ ci.product.primary_image) }}"
-                 alt="{{ ci.product.name }}">
+                 alt="{{ ci.product.name }}" loading="lazy">
             <div style="flex:1;min-width:0">
               <div style="font-size:.83rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ci.product.name }}</div>
               <div style="font-size:.75rem;color:var(--text-muted)">Qty: {{ ci.quantity }}</div>

@@ -83,7 +83,7 @@
       <a href="{{ url_for('main.seller_detail', slug=c.slug) }}" class="seller-mini-card">
         <div class="seller-mini-card__img">
           {% if c.logo %}
-          <img src="{{ url_for('static', filename='images/companies/'~c.logo) }}" alt="{{ c.name }}">
+          <img src="{{ url_for('static', filename='images/companies/'~c.logo) }}" alt="{{ c.name }}" loading="lazy">
           {% else %}
           <div class="seller-mini-card__initials">{{ c.name[0] }}</div>
           {% endif %}

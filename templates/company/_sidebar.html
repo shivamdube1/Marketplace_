@@ -1,7 +1,7 @@
 {% set comp = current_user.company %}
 <div class="sidebar-brand">
   {% if comp and comp.logo %}
-    <img src="{{ url_for('static',filename='images/companies/'~comp.logo) }}" class="sidebar-logo">
+    <img src="{{ url_for('static',filename='images/companies/'~comp.logo) }}" class="sidebar-logo" loading="lazy">
   {% else %}
     <div class="sidebar-logo-placeholder">{{ current_user.first_name[0] }}</div>
   {% endif %}

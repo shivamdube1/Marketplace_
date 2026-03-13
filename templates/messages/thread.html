@@ -51,7 +51,7 @@
   {% if thread.product %}
   <a href="{{ url_for('shop.product_detail', slug=thread.product.slug) }}" class="product-ref">
     {% if thread.product.primary_image %}
-    <img src="{{ url_for('static', filename='images/products/'~thread.product.primary_image) }}" alt="">
+    <img src="{{ url_for('static', filename='images/products/'~thread.product.primary_image) }}" alt="" loading="lazy">
     {% endif %}
     <div>
       <div class="product-ref__info"><i class="fas fa-tag"></i> Enquiry about</div>
@@ -67,7 +67,7 @@
     <div class="chat-box-header">
       <div class="chat-box-header__avatar">
         {% if current_user.is_customer and thread.company.logo %}
-        <img src="{{ url_for('static', filename='images/companies/'~thread.company.logo) }}" alt="">
+        <img src="{{ url_for('static', filename='images/companies/'~thread.company.logo) }}" alt="" loading="lazy">
         {% elif current_user.is_customer %}
         {{ thread.company.name[0] }}
         {% else %}

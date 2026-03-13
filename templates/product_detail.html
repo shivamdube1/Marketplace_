@@ -111,7 +111,7 @@
         {% for img in imgs %}
         <img src="{{ url_for('static', filename='images/products/'~img) }}"
              alt="{{ product.name }}" class="gallery-thumb {% if loop.first %}active{% endif %}"
-             onclick="switchImg(this)">
+             onclick="switchImg(this)" loading="lazy">
         {% endfor %}
       </div>
       {% endif %}

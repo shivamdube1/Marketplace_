@@ -180,9 +180,9 @@
       {% for company in featured_sellers %}
       <a href="{{ url_for('main.seller_detail', slug=company.slug) }}" class="sc">
         <div class="sc__banner">
-          {% if company.banner_image %}<img src="{{ url_for('static', filename='images/company/'~company.banner_image) }}" alt="">{% endif %}
+          {% if company.banner_image %}<img src="{{ url_for('static', filename='images/company/'~company.banner_image) }}" alt="" loading="lazy">{% endif %}
           <div class="sc__logo">
-            {% if company.logo_image %}<img src="{{ url_for('static', filename='images/company/'~company.logo_image) }}" alt="">
+            {% if company.logo_image %}<img src="{{ url_for('static', filename='images/company/'~company.logo_image) }}" alt="" loading="lazy">
             {% else %}{{ company.name[0] }}{% endif %}
           </div>
         </div>

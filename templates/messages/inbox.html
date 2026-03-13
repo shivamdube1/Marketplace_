@@ -23,7 +23,7 @@
        class="inbox-item {% if unread > 0 %}inbox-item--unread{% endif %}">
       <div class="inbox-item__avatar">
         {% if current_user.is_customer and t.company.logo %}
-          <img src="{{ url_for('static', filename='images/companies/'~t.company.logo) }}" alt="">
+          <img src="{{ url_for('static', filename='images/companies/'~t.company.logo) }}" alt="" loading="lazy">
         {% else %}
           <div class="inbox-avatar-initial">{{ (t.company.name[0] if current_user.is_customer else t.customer.first_name[0]) }}</div>
         {% endif %}

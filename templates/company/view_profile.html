@@ -172,7 +172,7 @@
       <!-- Logo -->
       <div class="cp-logo">
         {% if comp.logo %}
-        <img src="{{ url_for('static', filename='images/companies/'~comp.logo) }}" alt="{{ comp.name }}">
+        <img src="{{ url_for('static', filename='images/companies/'~comp.logo) }}" alt="{{ comp.name }}" loading="lazy">
         {% else %}
         <div class="cp-logo-placeholder">{{ comp.name[0] }}</div>
         {% endif %}

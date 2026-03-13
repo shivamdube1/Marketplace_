@@ -311,7 +311,7 @@
         <img src="{{ url_for('static', filename='images/logo.png') }}"
              alt="{{ brand_name }}"
              class="pay-logo"
-             onerror="this.style.display='none';document.getElementById('payBrandText').style.display='block'">
+             onerror="this.style.display='none';document.getElementById('payBrandText').style.display='block'" loading="lazy">
         <div id="payBrandText" class="pay-logo-text" style="display:none;">{{ brand_name }}</div>
       {% else %}
         <div class="pay-logo-text">{{ brand_name }}</div>

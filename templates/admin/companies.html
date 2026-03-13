@@ -51,7 +51,7 @@
             <div class="company-cell">
               {% if c.logo %}
                 <img src="{{ url_for('static', filename='images/companies/'~c.logo) }}"
-                     class="company-cell__logo" alt="{{ c.name }}">
+                     class="company-cell__logo" alt="{{ c.name }}" loading="lazy">
               {% else %}
                 <div class="company-cell__logo" style="background:var(--primary-light);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--primary);">
                   {{ c.name[0] }}

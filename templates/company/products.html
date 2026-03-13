@@ -120,7 +120,7 @@
               <div class="pm-product-cell">
                 {% if p.image %}
                 <img src="{{ url_for('static', filename='images/products/'~p.image) }}"
-                     class="pm-product-img" alt="{{ p.name }}">
+                     class="pm-product-img" alt="{{ p.name }}" loading="lazy">
                 {% else %}
                 <div class="pm-product-img-placeholder">🧵</div>
                 {% endif %}

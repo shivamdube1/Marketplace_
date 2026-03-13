@@ -50,7 +50,7 @@
 <!-- Hero Banner -->
 <div class="seller-hero">
   {% if comp.banner %}
-  <img src="{{ url_for('static', filename='images/companies/'~comp.banner) }}" alt="{{ comp.name }} banner">
+  <img src="{{ url_for('static', filename='images/companies/'~comp.banner) }}" alt="{{ comp.name }} banner" loading="lazy">
   {% endif %}
   <div class="seller-hero__overlay"></div>
 </div>
@@ -62,7 +62,7 @@
       <!-- Logo -->
       <div class="seller-logo">
         {% if comp.logo %}
-        <img src="{{ url_for('static', filename='images/companies/'~comp.logo) }}" alt="{{ comp.name }}">
+        <img src="{{ url_for('static', filename='images/companies/'~comp.logo) }}" alt="{{ comp.name }}" loading="lazy">
         {% else %}{{ comp.name[0] }}{% endif %}
       </div>
 

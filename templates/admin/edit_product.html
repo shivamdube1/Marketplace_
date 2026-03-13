@@ -22,7 +22,7 @@
         {% for img in images %}
           {% if img != 'placeholder.jpg' %}
           <div class="admin-img-thumb">
-            <img src="{{ url_for('static', filename='images/products/' + img) }}" alt="" />
+            <img src="{{ url_for('static', filename='images/products/' + img) }}" alt="" loading="lazy">
           </div>
           {% endif %}
         {% endfor %}

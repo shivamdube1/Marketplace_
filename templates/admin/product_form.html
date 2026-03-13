@@ -88,7 +88,7 @@
         {% if product and product.get_images() %}
         <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem;">
           {% for img in product.get_images() %}
-          <img src="{{ url_for('static',filename='images/products/'~img) }}" width="80" height="80" style="object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+          <img src="{{ url_for('static',filename='images/products/'~img) }}" width="80" height="80" style="object-fit:cover;border-radius:8px;border:1px solid var(--border);" loading="lazy">
           {% endfor %}
         </div>
         {% endif %}

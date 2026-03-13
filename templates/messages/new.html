@@ -10,7 +10,7 @@
   <div style="background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:.875rem 1rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;">
     {% if product.primary_image %}
     <img src="{{ url_for('static',filename='images/products/'~product.primary_image) }}"
-         style="width:44px;height:44px;object-fit:cover;border-radius:6px;">
+         style="width:44px;height:44px;object-fit:cover;border-radius:6px;" loading="lazy">
     {% endif %}
     <div>
       <div style="font-size:.75rem;color:var(--text-muted);">Asking about:</div>

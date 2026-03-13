@@ -26,7 +26,7 @@
       <div class="company-analytics-header__left">
         {% if comp.logo %}
         <img src="{{ url_for('static',filename='images/companies/'~comp.logo) }}"
-             class="company-analytics-logo">
+             class="company-analytics-logo" loading="lazy">
         {% endif %}
         <div>
           <h2>{{ comp.name }}</h2>
@@ -164,7 +164,7 @@
             <td>
               {% if p.image %}
               <img src="{{ url_for('static',filename='images/products/'~p.image) }}"
-                   width="36" height="36" style="object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:.4rem;">
+                   width="36" height="36" style="object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:.4rem;" loading="lazy">
               {% endif %}
               <strong>{{ p.name }}</strong>
             </td>
