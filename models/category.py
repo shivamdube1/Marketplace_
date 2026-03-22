@@ -14,6 +14,7 @@ class Category(db.Model):
     slug        = db.Column(db.String(80), unique=True, nullable=False, index=True)
     description = db.Column(db.Text)
     image       = db.Column(db.String(256))          # category hero image
+    icon        = db.Column(db.String(16), default='🧵')   # emoji icon
     is_featured = db.Column(db.Boolean, default=False)
     sort_order  = db.Column(db.Integer, default=0)
     created_at  = db.Column(db.DateTime, default=datetime.utcnow)

@@ -15,8 +15,7 @@ class ProductForm(FlaskForm):
     sale_price  = DecimalField('Sale Price (₹)', validators=[Optional()], places=2)
     sku         = StringField('SKU / Product Code', validators=[Optional(), Length(max=64)])
 
-    fabric_type = SelectField('Product Category *',
-                              choices=[('', '-- Select --')] + [(x, x) for x in FABRIC_CATEGORIES])
+    fabric_type = StringField('Product Category *', validators=[Optional(), Length(max=80)])
     material    = SelectField('Material / Fabric',
                               choices=[('', '-- Select --')] + [(x, x) for x in MATERIALS])
     color       = SelectField('Colour',
@@ -41,3 +40,8 @@ class ProductForm(FlaskForm):
     image_4 = FileField('Image 4',      validators=[Optional(), FileAllowed(['jpg','jpeg','png','webp'])])
 
     submit = SubmitField('Save Product')
+
+    def validate_sale_price(self, field):
+        if field.data and self.price.data and field.data >= self.price.data:
+            from wtforms import ValidationError
+            raise ValidationError('Sale price must be less than the regular price.')

@@ -47,14 +47,14 @@ def _seed_core():
     from models.product import Product
     from models.order import Order, OrderItem, OrderTracking
 
-    # ── Categories ──────────────────────────────────────────────────────────
+    # ── Categories (exactly 6) ──────────────────────────────────────────────
     categories = [
-        Category(name='Bed Sheets',      slug='bed-sheets', sort_order=1),
-        Category(name='Sarees',          slug='sarees', sort_order=2),
-        Category(name='Kurtas & Kurtis', slug='kurtas', sort_order=3),
-        Category(name='Dhooties',        slug='dhooties', sort_order=4),
-        Category(name='Fabrics & Cloth', slug='fabrics', sort_order=5),
-        Category(name='Home Textiles',   slug='home', sort_order=6),
+        Category(name='Bed Sheets',      slug='bed-sheets',    sort_order=1, icon='🛏️'),
+        Category(name='Sarees',          slug='sarees',        sort_order=2, icon='👘'),
+        Category(name='Kurtas & Kurtis', slug='kurtas',        sort_order=3, icon='👗'),
+        Category(name='Salwar Suits',    slug='salwar-suits',  sort_order=4, icon='👚'),
+        Category(name='Fabrics & Cloth', slug='fabrics',       sort_order=5, icon='🧵'),
+        Category(name='Home Textiles',   slug='home',          sort_order=6, icon='🏠'),
     ]
     db.session.add_all(categories)
     db.session.flush()
@@ -125,124 +125,86 @@ def _seed_core():
     db.session.add_all([cust1, cust2])
     db.session.flush()
 
-    # ── Products ───────────────────────────────────────────────────────────
+    # ── Products — exactly 1 per category ──────────────────────────────────
     products = [
-        # Sharma Textiles
+        # 1. Bed Sheets — Sharma Textiles
         Product(
             name='Premium Cotton Bed Sheet Set — White King',
             slug='premium-cotton-bed-sheet-white-king',
             image='cotton-bedsheet-white-king.jpg',
-            description='400 thread count pure Egyptian cotton. Set includes 1 flat sheet, 1 fitted sheet, and 2 pillowcases. Soft, breathable, and durable.',
+            description='400 thread count pure Egyptian cotton. Set includes 1 flat sheet, 1 fitted sheet, and 2 pillowcases. Soft, breathable, and machine washable. Perfect for all seasons.',
             price=1999, sale_price=1499, stock=150, min_order_qty=1,
             fabric_type='Bed Sheets', material='Cotton',
             color='White', size='King', pattern='Solid',
             is_featured=True, is_bestseller=True,
             company_id=comp1.id, category_id=cat_map['bed-sheets'],
         ),
-        Product(
-            name='Jaipuri Hand Block Print Bed Sheet — Queen',
-            slug='jaipuri-block-print-bed-sheet-queen',
-            image='jaipuri-blockprint-bedsheet.jpg',
-            description='Traditional hand block printed bed sheet from Jaipur. 100% cotton, naturally dyed with vibrant floral motifs.',
-            price=2499, stock=80, min_order_qty=1,
-            fabric_type='Bed Sheets', material='Cotton',
-            color='Blue', size='Queen', pattern='Floral',
-            is_new=True, is_featured=True,
-            company_id=comp1.id, category_id=cat_map['bed-sheets'],
-        ),
-        Product(
-            name='Luxury Microfibre Bed Sheet — Silver Grey',
-            slug='luxury-microfibre-bed-sheet-grey',
-            image='microfibre-bedsheet-grey.jpg',
-            description='Ultra-soft microfibre with 1000 GSM weight. Wrinkle resistant and fade proof. Machine washable.',
-            price=1299, sale_price=899, stock=200, min_order_qty=2,
-            fabric_type='Bed Sheets', material='Microfibre',
-            color='Grey', size='Double', pattern='Solid',
-            is_bestseller=True,
-            company_id=comp1.id, category_id=cat_map['bed-sheets'],
-        ),
-        Product(
-            name='Cotton Dhurrie — Geometric — 4×6 ft',
-            slug='cotton-dhurrie-geometric-4x6',
-            image='cotton-dhurrie-geometric.jpg',
-            description='Handwoven flatweave cotton dhurrie with classic geometric pattern. Reversible, easy to clean.',
-            price=3499, stock=40, min_order_qty=1,
-            fabric_type='Home Textiles', material='Cotton',
-            color='Multicolor', size='4x6 ft', pattern='Geometric',
-            company_id=comp1.id, category_id=cat_map['home'],
-        ),
-        Product(
-            name='Linen Cotton Blend Fabric — Per Metre',
-            slug='linen-cotton-blend-fabric-per-metre',
-            image='linen-cotton-blend-fabric.jpg',
-            description='55% linen, 45% cotton blend. Ideal for summer clothing and home décor. 58 inch width.',
-            price=599, stock=800, min_order_qty=3,
-            fabric_type='Fabrics & Cloth', material='Linen',
-            color='Ivory', size='1m', pattern='Solid',
-            is_new=True,
-            company_id=comp1.id, category_id=cat_map['fabrics'],
-        ),
-        # Patel Sarees
+        # 2. Sarees — Patel Sarees
         Product(
             name='Kanjivaram Pure Silk Saree — Deep Crimson',
             slug='kanjivaram-pure-silk-saree-crimson',
             image='kanjivaram-silk-saree-crimson.jpg',
-            description='Authentic Kanjivaram pure silk saree handwoven by master weavers in Kanchipuram. Intricate golden zari border and pallu.',
+            description='Authentic Kanjivaram pure silk saree handwoven by master weavers in Kanchipuram. Intricate golden zari border and pallu. Comes with a matching blouse piece.',
             price=8999, sale_price=7499, stock=45, min_order_qty=1,
             fabric_type='Sarees', material='Pure Silk',
             color='Red', size='Free Size', pattern='Geometric',
             is_featured=True, is_bestseller=True,
             company_id=comp2.id, category_id=cat_map['sarees'],
         ),
+        # 3. Kurtas & Kurtis — Patel Sarees
         Product(
-            name='Banarasi Silk Saree — Royal Midnight Blue',
-            slug='banarasi-silk-saree-midnight-blue',
-            image='banarasi-silk-saree-blue.jpg',
-            description='Handwoven Banarasi silk with traditional buta motifs and heavy gold zari. Perfect for weddings.',
-            price=6499, stock=30, min_order_qty=1,
-            fabric_type='Sarees', material='Art Silk',
-            color='Blue', size='Free Size', pattern='Floral',
-            is_new=True, is_featured=True,
-            company_id=comp2.id, category_id=cat_map['sarees'],
-        ),
-        Product(
-            name='Cotton Hand Block Print Kurta Set — Mint',
+            name='Hand Block Print Cotton Kurta Set — Mint Green',
             slug='cotton-block-print-kurta-set-mint',
             image='blockprint-kurta-set-mint.jpg',
-            description='Lightweight hand block printed cotton kurta with matching dupatta and palazzos. Summer-perfect.',
-            price=1299, sale_price=999, stock=120, min_order_qty=3,
+            description='Lightweight hand block printed cotton kurta with matching dupatta and palazzos. Traditional Rajasthani prints, summer-perfect. Available in S, M, L, XL.',
+            price=1299, sale_price=999, stock=120, min_order_qty=1,
             fabric_type='Kurtas & Kurtis', material='Cotton',
             color='Green', size='M', pattern='Floral', is_new=True,
             company_id=comp2.id, category_id=cat_map['kurtas'],
         ),
+        # 4. Salwar Suits — Sharma Textiles
         Product(
-            name='Pure Silk Fabric — Ivory — Per Metre',
-            slug='pure-silk-fabric-ivory-per-metre',
-            image='pure-silk-fabric-ivory.jpg',
-            description='Premium grade pure silk by the metre. Perfect for blouse stitching or special occasion garments.',
-            price=799, stock=500, min_order_qty=3,
-            fabric_type='Fabrics & Cloth', material='Pure Silk',
-            color='Ivory', size='1m', pattern='Solid',
-            company_id=comp2.id, category_id=cat_map['fabrics'],
+            name='Pure Cotton Salwar Suit — Embroidered Navy',
+            slug='pure-cotton-salwar-suit-navy',
+            image='cotton-salwar-suit-navy.jpg',
+            description='Elegant pure cotton salwar suit with delicate white embroidery on the yoke. Comes with matching dupatta. Comfortable daily wear and festive occasions.',
+            price=1599, sale_price=1199, stock=90, min_order_qty=1,
+            fabric_type='Salwar Suits', material='Cotton',
+            color='Blue', size='M', pattern='Embroidered', is_new=True,
+            company_id=comp1.id, category_id=cat_map['salwar-suits'],
         ),
+        # 5. Fabrics & Cloth — Sharma Textiles
         Product(
-            name='Georgette Saree — Peach Blossom',
-            slug='georgette-saree-peach-blossom',
-            image='georgette-saree-peach.jpg',
-            description='Lightweight printed georgette saree with digital floral print. Casual and party wear.',
-            price=2199, sale_price=1799, stock=80, min_order_qty=2,
-            fabric_type='Sarees', material='Georgette',
-            color='Peach', size='Free Size', pattern='Floral',
-            is_bestseller=True,
-            company_id=comp2.id, category_id=cat_map['sarees'],
+            name='Linen Cotton Blend Fabric — Per Metre',
+            slug='linen-cotton-blend-fabric-per-metre',
+            image='linen-cotton-blend-fabric.jpg',
+            description='55% linen, 45% cotton blend fabric sold by the metre. Ideal for summer clothing, shirts, and home décor. 58 inch width. Minimum order 3 metres.',
+            price=599, stock=800, min_order_qty=3,
+            fabric_type='Fabrics & Cloth', material='Linen',
+            color='Ivory', size='1m', pattern='Solid',
+            is_new=True,
+            company_id=comp1.id, category_id=cat_map['fabrics'],
+        ),
+        # 6. Home Textiles — Sharma Textiles
+        Product(
+            name='Cotton Dhurrie Rug — Geometric Pattern — 4×6 ft',
+            slug='cotton-dhurrie-geometric-4x6',
+            image='cotton-dhurrie-geometric.jpg',
+            description='Handwoven flatweave cotton dhurrie with classic geometric pattern. Reversible design, easy to clean, and fade resistant. Perfect for living rooms and bedrooms.',
+            price=3499, sale_price=2799, stock=40, min_order_qty=1,
+            fabric_type='Home Textiles', material='Cotton',
+            color='Multicolor', size='4x6 ft', pattern='Geometric',
+            is_featured=True,
+            company_id=comp1.id, category_id=cat_map['home'],
         ),
     ]
     db.session.add_all(products)
     db.session.flush()
 
-    # Add view counts
-    for i, p in enumerate(products):
-        p.view_count = (i * 37 + 20) % 200 + 30
+    # Seed realistic view counts
+    view_counts = [183, 241, 97, 134, 312, 76]
+    for p, vc in zip(products, view_counts):
+        p.view_count = vc
 
     db.session.commit()
 

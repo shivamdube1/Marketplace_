@@ -957,114 +957,7 @@ canvas{display:block;width:100% !important}
   margin-bottom:1.5rem;box-shadow:var(--shadow-sm);
 }
 
-/* Seller grid */
-.seller-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:1.35rem;
-  margin-bottom:2rem;
-}
-.seller-grid--large{
-  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-}
-
-/* Seller card */
-.seller-card{
-  background:var(--white);
-  border:1px solid var(--border-lt);
-  border-radius:var(--radius);
-  overflow:hidden;
-  display:flex;flex-direction:column;
-  text-decoration:none;
-  transition:box-shadow var(--t),transform var(--t);
-  position:relative;
-}
-.seller-card:hover{
-  box-shadow:var(--shadow-lg);
-  transform:translateY(-5px);
-}
-
-/* Banner — fixed 140px, covers nicely */
-.seller-card__banner{
-  height:140px;
-  background:linear-gradient(135deg,var(--secondary) 0%,var(--secondary-light) 100%);
-  position:relative;overflow:hidden;flex-shrink:0;
-}
-.seller-card__banner img{
-  width:100%;height:100%;object-fit:cover;
-  transition:transform .5s ease;
-}
-.seller-card:hover .seller-card__banner img{transform:scale(1.06)}
-.seller-card__banner--default{
-  width:100%;height:100%;
-  background:linear-gradient(135deg,var(--secondary),var(--secondary-light));
-}
-.seller-card__badge{
-  position:absolute;top:.6rem;right:.6rem;
-  background:rgba(255,255,255,.92);backdrop-filter:blur(4px);
-  border-radius:20px;padding:.2rem .65rem;
-  font-size:.68rem;font-weight:800;color:var(--success);
-  border:1px solid rgba(21,128,61,.2);
-}
-
-/* Logo — perfectly sized, centred on the card edge */
-.seller-card__body{
-  padding:3rem 1.1rem 1.25rem;
-  display:flex;flex-direction:column;gap:.3rem;
-  flex:1;
-  position:relative;
-}
-.seller-card__logo{
-  position:absolute;top:-32px;left:1.1rem;
-  width:60px;height:60px;
-  border-radius:12px;
-  background:var(--white);
-  border:3px solid var(--white);
-  box-shadow:0 4px 14px rgba(0,0,0,.15);
-  overflow:hidden;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
-}
-.seller-card__logo img{
-  width:100%;height:100%;
-  object-fit:cover;          /* fills square, no distortion */
-  object-position:center;
-}
-.seller-card__logo-placeholder{
-  width:100%;height:100%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.5rem;font-weight:800;
-  color:var(--primary);
-  background:var(--primary-light);
-}
-.seller-card__name{
-  font-size:1rem;font-weight:800;
-  color:var(--text-dark);margin-top:.15rem;line-height:1.25;
-}
-.seller-card__tagline{
-  font-size:.78rem;color:var(--text-muted);
-  line-height:1.5;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-}
-.seller-card__meta{
-  display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem;
-}
-.seller-card__meta span{
-  display:inline-flex;align-items:center;gap:.25rem;
-  font-size:.72rem;font-weight:600;
-  color:var(--text-muted);
-  background:var(--bg-alt);
-  border-radius:6px;padding:.2rem .55rem;
-}
-.seller-card__meta i{font-size:.65rem;color:var(--primary)}
-
-/* Sell CTA banner */
-.sell-cta{background:linear-gradient(135deg,var(--secondary),var(--secondary-light));border-radius:var(--radius-lg);padding:2.5rem 2rem;color:#fff}
-.sell-cta__inner{display:flex;align-items:center;justify-content:space-between;gap:2rem;flex-wrap:wrap}
-.sell-cta h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:#fff}
-.sell-cta p{font-size:.9rem;color:rgba(255,255,255,.7);margin-top:.3rem}
-.btn--white{background:#fff;color:var(--secondary);border-color:#fff;font-weight:700}
-.btn--white:hover{background:var(--primary-light);border-color:var(--primary-light)}
+/* Seller grid & cards — see full rules at bottom of file (SELLER SECTION block) */
 
 /* ══════════════════════════════════════════════════════════════
    ADMIN COMPANIES TABLE — compact professional layout
@@ -1095,11 +988,9 @@ canvas{display:block;width:100% !important}
 .status-pill--featured{background:#EDE9FE;color:#5B21B6}
 
 @media(max-width:900px){
-  .seller-grid,.seller-grid--large{grid-template-columns:repeat(2,1fr)}
   .sell-cta__inner{flex-direction:column;text-align:center}
 }
 @media(max-width:520px){
-  .seller-grid,.seller-grid--large{grid-template-columns:1fr}
 }
 
 /* ══════════════════════════════════════════════════════════════
@@ -1164,4 +1055,432 @@ canvas{display:block;width:100% !important}
 .badge--return {
   background: #FEF3C7; color: #92400E;
   border: 1px solid #F59E0B;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   SELLER SECTION — Professional UI Additions
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Approval pending banner ── */
+.approval-pending-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  border-left: 4px solid #F59E0B;
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.approval-pending-banner__icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: .1rem;
+}
+.approval-pending-banner__text {
+  font-size: .875rem;
+  line-height: 1.6;
+  color: var(--text-dark);
+}
+.approval-pending-banner__text strong {
+  display: block;
+  font-size: .95rem;
+  color: #92400E;
+  margin-bottom: .25rem;
+}
+.approval-pending-banner__text p {
+  color: #78350F;
+  font-size: .83rem;
+}
+
+/* ── Quick actions bar ── */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .625rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-alt);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-lt);
+  margin-bottom: 1.5rem;
+}
+.quick-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+}
+
+/* ── Seller dashboard welcome topbar ── */
+.dashboard__topbar h1 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--secondary);
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* ── Sidebar brand logo ── */
+.sidebar-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.2);
+  flex-shrink: 0;
+}
+.sidebar-logo-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.15);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,.15);
+}
+.sidebar-brand strong {
+  font-size: .9rem;
+  font-weight: 700;
+  color: #fff;
+  display: block;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+.sidebar-brand small {
+  font-size: .68rem;
+  color: rgba(255,255,255,.55);
+  font-weight: 500;
+}
+
+/* ── Seller cards grid — improved ── */
+.seller-grid,
+.seller-grid--large {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.seller-card {
+  background: var(--white);
+  border: 1px solid var(--border-lt);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  transition: box-shadow .25s ease, transform .25s ease;
+  position: relative;
+}
+.seller-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-5px);
+  border-color: var(--border);
+}
+
+.seller-card__banner {
+  height: 150px;
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.seller-card__banner img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform .6s ease;
+}
+.seller-card:hover .seller-card__banner img { transform: scale(1.08); }
+.seller-card__banner--default {
+  width: 100%; height: 100%;
+}
+
+/* Badges on card */
+.seller-card__badge {
+  position: absolute;
+  top: .7rem; right: .7rem;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 20px;
+  padding: .22rem .7rem;
+  font-size: .68rem;
+  font-weight: 800;
+  color: var(--success);
+  border: 1px solid rgba(21,128,61,.25);
+  white-space: nowrap;
+}
+
+/* Card body */
+.seller-card__body {
+  padding: 3.2rem 1.25rem 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  flex: 1;
+  position: relative;
+}
+
+/* Floating logo */
+.seller-card__logo {
+  position: absolute;
+  top: -32px;
+  left: 1.25rem;
+  width: 62px;
+  height: 62px;
+  border-radius: 14px;
+  background: var(--white);
+  border: 3px solid var(--white);
+  box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.seller-card__logo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.seller-card__logo-placeholder {
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.seller-card__name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-top: .2rem;
+  line-height: 1.3;
+}
+.seller-card__tagline {
+  font-size: .78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.seller-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .6rem;
+}
+.seller-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+  border-radius: 6px;
+  padding: .22rem .55rem;
+  border: 1px solid var(--border-lt);
+}
+.seller-card__meta i { font-size: .65rem; color: var(--primary); }
+
+/* ── Sell CTA banner — improved ── */
+.sell-cta {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-light) 100%);
+  border-radius: var(--radius-lg);
+  padding: 2.75rem 2.5rem;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  margin-top: 3rem;
+}
+.sell-cta::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  pointer-events: none;
+}
+.sell-cta::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -40px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+  pointer-events: none;
+}
+.sell-cta__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+.sell-cta h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: .35rem;
+}
+.sell-cta p {
+  font-size: .9rem;
+  color: rgba(255,255,255,.72);
+}
+.btn--white {
+  background: #fff;
+  color: var(--secondary);
+  border-color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.btn--white:hover {
+  background: var(--primary-light);
+  border-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* ── Seller detail — section heading with divider ── */
+.section-heading {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
+.section-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-lt);
+}
+
+/* ── Sidebar detail cards ── */
+.sidebar-detail-card {
+  background: var(--white);
+  border: 1px solid var(--border-lt);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+.sidebar-detail-card__title {
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  padding-bottom: .65rem;
+  border-bottom: 1px solid var(--border-lt);
+}
+.sidebar-contact-link {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--secondary);
+  padding: .45rem 0;
+  transition: color var(--t);
+  text-decoration: none;
+}
+.sidebar-contact-link:hover { color: var(--primary); }
+.sidebar-contact-link i { color: var(--primary); width: 16px; text-align: center; flex-shrink: 0; }
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .5rem 0;
+  border-bottom: 1px solid var(--border-lt);
+  font-size: .85rem;
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-row__label { color: var(--text-muted); }
+.stat-row__value { font-weight: 700; color: var(--text-dark); }
+
+/* ── Review cards ── */
+.review-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-lt);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  margin-bottom: .875rem;
+  transition: box-shadow var(--t);
+}
+.review-card:hover { box-shadow: var(--shadow-sm); }
+.review-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .6rem;
+}
+.review-card__reviewer {
+  font-weight: 700;
+  font-size: .875rem;
+  color: var(--text-dark);
+}
+.review-card__date { font-size: .72rem; color: var(--text-muted); white-space: nowrap; }
+.review-card__title { font-weight: 600; font-size: .875rem; margin-bottom: .3rem; color: var(--text-dark); }
+.review-card__text { font-size: .83rem; color: var(--text-muted); line-height: 1.65; }
+.review-seller-reply {
+  background: var(--bg-alt);
+  border-left: 3px solid var(--primary);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: .65rem .875rem;
+  font-size: .82rem;
+  color: var(--text-muted);
+  margin-top: .75rem;
+}
+.review-seller-reply__label {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: .75rem;
+  margin-bottom: .2rem;
+}
+.review-reply-form { display: none; margin-top: .5rem; }
+.review-reply-form textarea {
+  width: 100%;
+  font-size: .83rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: .5rem .75rem;
+  background: var(--white);
+  resize: vertical;
+  outline: none;
+}
+.review-reply-form textarea:focus { border-color: var(--primary); }
+
+/* ── Responsive seller grid ── */
+@media (max-width: 900px) {
+  .seller-grid,
+  .seller-grid--large { grid-template-columns: repeat(2, 1fr); }
+  .sell-cta__inner { flex-direction: column; text-align: center; }
+}
+@media (max-width: 560px) {
+  .seller-grid,
+  .seller-grid--large { grid-template-columns: 1fr; }
 }

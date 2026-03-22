@@ -10,13 +10,15 @@ class Order(db.Model):
     __tablename__ = 'orders'
 
     # Status constants
-    STATUS_PENDING    = 'pending'
-    STATUS_CONFIRMED  = 'confirmed'
-    STATUS_PROCESSING = 'processing'
-    STATUS_SHIPPED    = 'shipped'
-    STATUS_DELIVERED  = 'delivered'
-    STATUS_CANCELLED  = 'cancelled'
-    STATUS_REFUNDED   = 'refunded'
+    STATUS_PENDING           = 'pending'
+    STATUS_CONFIRMED         = 'confirmed'
+    STATUS_PROCESSING        = 'processing'
+    STATUS_SHIPPED           = 'shipped'
+    STATUS_DELIVERED         = 'delivered'
+    STATUS_CANCELLED         = 'cancelled'
+    STATUS_REFUNDED          = 'refunded'
+    STATUS_RETURN_REQUESTED  = 'return_requested'
+    STATUS_RETURNED          = 'returned'
 
     id              = db.Column(db.Integer, primary_key=True)
     order_number    = db.Column(db.String(32), unique=True, nullable=False, index=True)

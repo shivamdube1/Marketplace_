@@ -14,7 +14,53 @@ from forms.checkout_forms import CheckoutForm
 from routes.cart import _get_cart, _calc_shipping
 
 
-# ── State-based auto-assign helper ───────────────────────────────────────────
+# ── All Indian states & UTs — full coverage ───────────────────────────────────
+#
+# Maps every state/UT to a delivery partner email.
+# Add real partner accounts in seed.py / admin panel as you expand.
+#
+STATE_PARTNER_EMAIL = {
+    # States
+    'Andhra Pradesh':       'rider.ap@fabricbazaar.in',
+    'Arunachal Pradesh':    'rider.northeast@fabricbazaar.in',
+    'Assam':                'rider.northeast@fabricbazaar.in',
+    'Bihar':                'rider.bihar@fabricbazaar.in',
+    'Chhattisgarh':         'rider.cg@fabricbazaar.in',
+    'Goa':                  'rider.goa@fabricbazaar.in',
+    'Gujarat':              'rider.guj@fabricbazaar.in',
+    'Haryana':              'rider.haryana@fabricbazaar.in',
+    'Himachal Pradesh':     'rider.hp@fabricbazaar.in',
+    'Jharkhand':            'rider.jharkhand@fabricbazaar.in',
+    'Karnataka':            'rider.kar@fabricbazaar.in',
+    'Kerala':               'rider.kerala@fabricbazaar.in',
+    'Madhya Pradesh':       'rider.mp@fabricbazaar.in',
+    'Maharashtra':          'rider.mah@fabricbazaar.in',
+    'Manipur':              'rider.northeast@fabricbazaar.in',
+    'Meghalaya':            'rider.northeast@fabricbazaar.in',
+    'Mizoram':              'rider.northeast@fabricbazaar.in',
+    'Nagaland':             'rider.northeast@fabricbazaar.in',
+    'Odisha':               'rider.odisha@fabricbazaar.in',
+    'Punjab':               'rider.punjab@fabricbazaar.in',
+    'Rajasthan':            'rider.rajasthan@fabricbazaar.in',
+    'Sikkim':               'rider.northeast@fabricbazaar.in',
+    'Tamil Nadu':           'rider.tn@fabricbazaar.in',
+    'Telangana':            'rider.telangana@fabricbazaar.in',
+    'Tripura':              'rider.northeast@fabricbazaar.in',
+    'Uttar Pradesh':        'rider.up@fabricbazaar.in',
+    'Uttarakhand':          'rider.uk@fabricbazaar.in',
+    'West Bengal':          'rider.wb@fabricbazaar.in',
+    # Union Territories
+    'Andaman and Nicobar Islands': 'rider.island@fabricbazaar.in',
+    'Chandigarh':           'rider.punjab@fabricbazaar.in',
+    'Dadra and Nagar Haveli and Daman and Diu': 'rider.guj@fabricbazaar.in',
+    'Delhi':                'rider.delhi@fabricbazaar.in',
+    'Jammu and Kashmir':    'rider.jk@fabricbazaar.in',
+    'Ladakh':               'rider.jk@fabricbazaar.in',
+    'Lakshadweep':          'rider.island@fabricbazaar.in',
+    'Puducherry':           'rider.tn@fabricbazaar.in',
+}
+_DEFAULT_PARTNER = 'rider.rest@fabricbazaar.in'
+
 
 def _auto_assign_delivery(order):
     """Automatically assign order to the delivery partner for that state."""
@@ -23,19 +69,15 @@ def _auto_assign_delivery(order):
         from models.order import OrderTracking
         from models.user import User
 
-        STATE_PARTNER_EMAIL = {
-            'Chhattisgarh':  'rider.cg@fabricbazaar.in',
-            'Maharashtra':   'rider@fabricbazaar.in',
-            'Karnataka':     'rider.kar@fabricbazaar.in',
-            'Goa':           'rider.goa@fabricbazaar.in',
-        }
-
         order_state = (order.state or '').strip()
-        email = STATE_PARTNER_EMAIL.get(order_state, 'rider.rest@fabricbazaar.in')
+        email = STATE_PARTNER_EMAIL.get(order_state, _DEFAULT_PARTNER)
 
         user = User.query.filter_by(email=email).first()
         if not user:
-            return  # partner not seeded yet
+            # Try the default fallback partner
+            user = User.query.filter_by(email=_DEFAULT_PARTNER).first()
+        if not user:
+            return
 
         partner = DeliveryPartner.query.filter_by(user_id=user.id).first()
         if not partner:
@@ -44,7 +86,7 @@ def _auto_assign_delivery(order):
         # Don't double-assign
         existing = DeliveryAssignment.query.filter(
             DeliveryAssignment.order_id == order.id,
-            DeliveryAssignment.status.notin_(['delivered','failed','returned','cancelled'])
+            DeliveryAssignment.status.notin_(['delivered', 'failed', 'returned', 'cancelled'])
         ).first()
         if existing:
             return
@@ -64,9 +106,44 @@ def _auto_assign_delivery(order):
             message=f'Auto-assigned to delivery partner for {order_state or "your region"}. OTP generated for customer.',
         )
         db.session.commit()
-    except Exception as e:
+    except Exception:
         import traceback
-        traceback.print_exc()
+        current_app.logger.exception('Delivery auto-assign failed for order %s', order.id)
+
+
+def _check_cod_eligibility(user, total):
+    """
+    Returns (allowed: bool, reason: str).
+    Blocks COD if order value exceeds limit or user has too many pending COD orders.
+    """
+    max_value   = current_app.config.get('COD_MAX_ORDER_VALUE', 5000)
+    max_pending = current_app.config.get('COD_MAX_PENDING', 2)
+
+    if float(total) > max_value:
+        return False, (
+            f'Cash on Delivery is only available for orders up to ₹{max_value:,}. '
+            f'Please pay online for this order.'
+        )
+
+    if user and user.is_authenticated:
+        pending_cod = Order.query.filter_by(
+            user_id=user.id,
+            payment_status='cod',
+            status=Order.STATUS_CONFIRMED,
+        ).count()
+        # Also count orders that are processing/shipped but not yet delivered
+        active_cod = Order.query.filter(
+            Order.user_id == user.id,
+            Order.payment_status == 'cod',
+            Order.status.in_([Order.STATUS_PROCESSING, Order.STATUS_SHIPPED]),
+        ).count()
+        if (pending_cod + active_cod) >= max_pending:
+            return False, (
+                f'You have {pending_cod + active_cod} pending Cash on Delivery orders. '
+                f'Please pay online or wait for existing orders to be delivered.'
+            )
+
+    return True, ''
 
 
 checkout_bp = Blueprint('checkout', __name__)
@@ -93,6 +170,9 @@ def index():
     tax      = round(float(subtotal) * 0.18, 2)
     total    = float(subtotal) + float(shipping) + float(tax)
 
+    cod_max  = current_app.config.get('COD_MAX_ORDER_VALUE', 5000)
+    cod_available = float(total) <= cod_max
+
     form = CheckoutForm()
     if current_user.is_authenticated and not form.is_submitted():
         form.first_name.data = current_user.first_name
@@ -100,8 +180,17 @@ def index():
         form.email.data      = current_user.email
 
     if form.validate_on_submit():
-        loyalty_discount = 0.0
         payment_method = request.form.get('payment_method', 'online')
+
+        # COD eligibility check
+        if payment_method == 'cod':
+            allowed, reason = _check_cod_eligibility(current_user, total)
+            if not allowed:
+                flash(reason, 'warning')
+                return render_template('checkout.html', form=form,
+                                       cart_items=cart_items, subtotal=subtotal,
+                                       shipping=shipping, tax=tax, total=total,
+                                       cod_available=cod_available, cod_max=cod_max)
 
         order = Order(
             order_number   = Order.generate_order_number(),
@@ -137,9 +226,11 @@ def index():
                 price         = product.display_price,
                 quantity      = ci['quantity'],
             ))
-            p = Product.query.get(product.id)
-            if p:
+            p = Product.query.with_for_update().filter_by(id=product.id).first()
+            if p and p.stock >= ci['quantity']:
                 p.stock = max(0, p.stock - ci['quantity'])
+            elif p and p.stock < ci['quantity']:
+                p.stock = 0  # floor at zero even if concurrent orders raced
 
         db.session.commit()
         session['pending_order'] = order.order_number
@@ -169,7 +260,9 @@ def index():
                            subtotal=subtotal,
                            shipping=shipping,
                            tax=tax,
-                           total=total)
+                           total=total,
+                           cod_available=cod_available,
+                           cod_max=cod_max)
 
 
 # ─── Payment Page ─────────────────────────────────────────────────────────────
@@ -189,7 +282,6 @@ def payment(order_number):
 
 @checkout_bp.route('/razorpay/create-order', methods=['POST'])
 def create_razorpay_order():
-    import razorpay
     data         = request.get_json() or {}
     order_number = data.get('order_number') or session.get('pending_order')
     if not order_number:
@@ -199,28 +291,37 @@ def create_razorpay_order():
         return jsonify({'success': False, 'error': 'Order not found'}), 404
 
     if order.razorpay_order_id:
-        return jsonify({'success': True, 'rzp_order_id': order.razorpay_order_id,
-                        'amount': 100, 'key': current_app.config['RAZORPAY_KEY_ID'],
-                        'name': order.full_name, 'email': order.email,
-                        'phone': order.phone or ''})
+        return jsonify({
+            'success': True,
+            'rzp_order_id': order.razorpay_order_id,
+            'amount': int(float(order.total) * 100),
+            'key': current_app.config['RAZORPAY_KEY_ID'],
+            'name': order.full_name, 'email': order.email,
+            'phone': order.phone or '',
+        })
     try:
         client = _razorpay_client()
+        amount_paise = int(float(order.total) * 100)
         rzp_order = client.order.create({
-            'amount': 100, 'currency': 'INR',
+            'amount': amount_paise,
+            'currency': 'INR',
             'receipt': order.order_number,
             'notes': {'order_number': order.order_number},
             'payment_capture': 1,
         })
         order.razorpay_order_id = rzp_order['id']
         db.session.commit()
-        return jsonify({'success': True, 'rzp_order_id': rzp_order['id'],
-                        'amount': rzp_order['amount'],
-                        'key': current_app.config['RAZORPAY_KEY_ID'],
-                        'name': order.full_name, 'email': order.email,
-                        'phone': order.phone or ''})
+        return jsonify({
+            'success': True,
+            'rzp_order_id': rzp_order['id'],
+            'amount': rzp_order['amount'],
+            'key': current_app.config['RAZORPAY_KEY_ID'],
+            'name': order.full_name, 'email': order.email,
+            'phone': order.phone or '',
+        })
     except Exception as e:
         current_app.logger.error(f'Razorpay error: {e}')
-        return jsonify({'success': False, 'error': 'Payment service error'}), 500
+        return jsonify({'success': False, 'error': 'Payment service error. Please try again.'}), 500
 
 
 # ─── Verify Razorpay Signature (AJAX) ─────────────────────────────────────────
@@ -245,6 +346,10 @@ def verify_payment():
     expected_sig = hmac.new(key_secret, message, hashlib.sha256).hexdigest()
 
     if not hmac.compare_digest(expected_sig, razorpay_signature):
+        current_app.logger.warning(
+            f'Payment signature mismatch for order {order_number}. '
+            f'Possible fraud attempt from IP {request.remote_addr}.'
+        )
         return jsonify({'success': False, 'error': 'Signature verification failed'}), 400
 
     order.status              = Order.STATUS_CONFIRMED
@@ -278,7 +383,8 @@ def payment_failed():
             for item in order.items:
                 if item.product_id:
                     p = Product.query.get(item.product_id)
-                    if p: p.stock += item.quantity
+                    if p:
+                        p.stock += item.quantity
             order.payment_status = 'failed'
             order.notes = (order.notes or '') + f'\nPayment failed: {reason}'
             db.session.commit()

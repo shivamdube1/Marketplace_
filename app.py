@@ -1,8 +1,8 @@
 from datetime import datetime
 import os
-from flask import Flask
+from flask import Flask, render_template, request
 from config import config
-from extensions import db, login_manager, bcrypt, migrate, csrf
+from extensions import db, login_manager, bcrypt, migrate, csrf, limiter
 
 
 def create_app(config_name=None):
@@ -12,16 +12,43 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
+    # Run config-level init if defined (e.g. production warnings)
+    cfg = config[config_name]
+    if hasattr(cfg, 'init_app'):
+        cfg.init_app(app)
+
     db.init_app(app)
     login_manager.init_app(app)
     bcrypt.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
+    limiter.init_app(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please sign in to continue.'
     login_manager.login_message_category = 'info'
 
+    # ── Security Headers ──────────────────────────────────────────────────────
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+        # Basic CSP — tighten per-environment as needed
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self' https://api.razorpay.com; "
+            "frame-src https://api.razorpay.com https://checkout.razorpay.com;"
+        )
+        return response
+
+    # ── Blueprints ────────────────────────────────────────────────────────────
     from routes.main      import main_bp
     from routes.auth      import auth_bp
     from routes.shop      import shop_bp
@@ -35,6 +62,7 @@ def create_app(config_name=None):
     from routes.buyer     import buyer_bp
     from routes.tracking  import tracking_bp
     from routes.delivery  import delivery_bp
+    from routes.wishlist  import wishlist_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp,      url_prefix='/auth')
@@ -49,7 +77,27 @@ def create_app(config_name=None):
     app.register_blueprint(buyer_bp)
     app.register_blueprint(tracking_bp)
     app.register_blueprint(delivery_bp)
+    app.register_blueprint(wishlist_bp)
 
+    # ── Error Handlers ────────────────────────────────────────────────────────
+    @app.errorhandler(404)
+    def not_found(e):
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def server_error(e):
+        app.logger.error(f'Server Error: {e}')
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(429)
+    def rate_limited(e):
+        return render_template('errors/429.html'), 429
+
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+
+    # ── Context Processors ────────────────────────────────────────────────────
     @app.context_processor
     def inject_globals():
         from routes.cart import _get_cart_count
@@ -62,7 +110,6 @@ def create_app(config_name=None):
         pending_companies_count = Company.query.filter_by(
             is_verified=False, is_active=True).count()
 
-        # Unread message count for navbar badge
         unread_messages = 0
         try:
             if current_user.is_authenticated:
@@ -85,10 +132,12 @@ def create_app(config_name=None):
             'brand_tagline':           app.config['BRAND_TAGLINE'],
             'currency_symbol':         app.config['CURRENCY_SYMBOL'],
             'pending_companies_count': pending_companies_count,
-            'now': __import__('datetime').datetime.utcnow(),
+            'now':                     datetime.utcnow(),
             'unread_messages':         int(unread_messages),
+            'current_year':            datetime.utcnow().year,
         }
 
+    # ── Template Filters ──────────────────────────────────────────────────────
     @app.template_filter('inr')
     def inr_filter(value):
         try:
@@ -103,8 +152,39 @@ def create_app(config_name=None):
     return app
 
 
+def _run_safe_migrations(app):
+    """Add any missing columns to existing DB without dropping data."""
+    with app.app_context():
+        from sqlalchemy import text, inspect
+        engine = db.engine
+        inspector = inspect(engine)
+
+        NEEDED = [
+            ('orders',     'delivered_at',
+             'ALTER TABLE orders ADD COLUMN delivered_at DATETIME'),
+            ('orders',     'is_cod_flagged',
+             'ALTER TABLE orders ADD COLUMN is_cod_flagged BOOLEAN DEFAULT 0'),
+            ('categories', 'icon',
+             "ALTER TABLE categories ADD COLUMN icon VARCHAR(16) DEFAULT '🧵'"),
+        ]
+
+        with engine.connect() as conn:
+            for table, col, ddl in NEEDED:
+                if ddl is None:
+                    continue
+                try:
+                    cols = [c['name'] for c in inspector.get_columns(table)]
+                    if col not in cols:
+                        conn.execute(text(ddl))
+                        conn.commit()
+                        print(f'  ✓ Added column {table}.{col}')
+                except Exception as e:
+                    print(f'  ! Migration warning ({table}.{col}): {e}')
+
+
 if __name__ == '__main__':
     app = create_app('development')
     with app.app_context():
         db.create_all()
+    _run_safe_migrations(app)
     app.run(debug=True, host='0.0.0.0', port=5000)

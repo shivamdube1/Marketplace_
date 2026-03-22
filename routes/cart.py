@@ -7,7 +7,7 @@ Cart routes — dual-mode cart:
 from flask import (Blueprint, render_template, redirect, url_for,
                    flash, request, session, jsonify)
 from flask_login import login_required, current_user
-from extensions import db
+from extensions import db, limiter
 from models.product import Product
 from models.cart import CartItem
 
@@ -30,6 +30,7 @@ def view_cart():
 # ── Add to cart ───────────────────────────────────────────────────────────────
 
 @cart_bp.route('/add/<int:product_id>', methods=['POST'])
+@limiter.limit('30 per minute')
 def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
 

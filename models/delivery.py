@@ -97,5 +97,5 @@ class DeliveryAssignment(db.Model):
 
     @staticmethod
     def generate_otp():
-        import random
-        return str(random.randint(100000, 999999))
+        import secrets
+        return str(secrets.randbelow(900000) + 100000)

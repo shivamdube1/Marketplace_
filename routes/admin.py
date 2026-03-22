@@ -486,6 +486,19 @@ def _save_image(field, subfolder):
     ext = field.data.filename.rsplit('.', 1)[-1].lower()
     if ext not in {'png', 'jpg', 'jpeg', 'webp'}:
         return None
+    # Read first 12 bytes to verify MIME type matches extension
+    header = field.data.read(12)
+    field.data.seek(0)
+    MAGIC = {b'\xff\xd8\xff': 'jpg', b'\x89PNG': 'png', b'RIFF': 'webp'}
+    detected = None
+    for magic, mime in MAGIC.items():
+        if header.startswith(magic):
+            detected = mime
+            break
+    # gif/png/webp/jpg are all acceptable; reject if clearly not an image
+    if detected is None and ext not in {'webp'}:
+        current_app.logger.warning(f'Upload rejected: file header mismatch for {field.data.filename}')
+        return None
     filename = f'{uuid.uuid4().hex[:12]}.{ext}'
     folder = os.path.join(current_app.root_path, 'static', 'images', subfolder)
     os.makedirs(folder, exist_ok=True)

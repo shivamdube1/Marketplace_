@@ -5,7 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#2C4A3E">
   <title>{% block title %}{{ brand_name }}{% endblock %} — India's Fabric Marketplace</title>
-  <meta name="description" content="{% block meta_desc %}FabricBazaar — premium fabrics, sarees, and bedsheets from verified Indian sellers.{% endblock %}">
+  <meta name="description" content="{% block meta_desc %}FabricBazaar — India's trusted marketplace for premium fabrics, sarees, bed sheets, kurtas and textiles from verified sellers. Buy direct from weavers with pan-India delivery.{% endblock %}">
+  <meta name="keywords" content="{% block meta_keywords %}fabric marketplace India, buy sarees online, bed sheets, kurtas, Indian textiles, handloom, silk sarees, cotton fabric, verified sellers{% endblock %}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="{% block canonical %}{{ request.url }}{% endblock %}">
+
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:type"        content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title"       content="{% block og_title %}{{ self.title() }} — FabricBazaar{% endblock %}">
+  <meta property="og:description" content="{% block og_desc %}{{ self.meta_desc() }}{% endblock %}">
+  <meta property="og:image"       content="{% block og_image %}{{ url_for('static', filename='images/logo.png', _external=True) }}{% endblock %}">
+  <meta property="og:url"         content="{{ request.url }}">
+  <meta property="og:site_name"   content="FabricBazaar">
+  <meta property="og:locale"      content="en_IN">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="{{ self.og_title() }}">
+  <meta name="twitter:description" content="{{ self.og_desc() }}">
+  <meta name="twitter:image"       content="{{ self.og_image() }}">
+
+  <!-- Structured Data: Organisation -->
+  {% block structured_data %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "FabricBazaar",
+    "url": "{{ request.host_url }}",
+    "logo": "{{ url_for('static', filename='images/logo.png', _external=True) }}",
+    "description": "India's trusted marketplace for premium fabrics, sarees, and home textiles.",
+    "areaServed": "IN",
+    "sameAs": []
+  }
+  </script>
+  {% endblock %}
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

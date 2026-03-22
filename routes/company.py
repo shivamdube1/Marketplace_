@@ -214,8 +214,10 @@ def add_product():
         flash(f'Product "{product.name}" added successfully!', 'success')
         return redirect(url_for('company.products'))
 
+    from models.category import Category
+    categories = Category.query.order_by(Category.sort_order).all()
     return render_template('company/product_form.html', form=form, comp=comp,
-                           title='Add Product', action='add')
+                           title='Add Product', action='add', categories=categories)
 
 
 @company_bp.route('/products/<int:pid>/edit', methods=['GET', 'POST'])
@@ -258,8 +260,11 @@ def edit_product(pid):
         flash('Product updated!', 'success')
         return redirect(url_for('company.products'))
 
+    from models.category import Category
+    categories = Category.query.order_by(Category.sort_order).all()
     return render_template('company/product_form.html', form=form, comp=comp,
-                           product=product, title='Edit Product', action='edit')
+                           product=product, title='Edit Product', action='edit',
+                           categories=categories)
 
 
 @company_bp.route('/products/<int:pid>/toggle', methods=['POST'])
@@ -441,6 +446,19 @@ def _save_image(field, subfolder):
         return None
     ext = field.data.filename.rsplit('.', 1)[-1].lower()
     if ext not in {'png', 'jpg', 'jpeg', 'webp'}:
+        return None
+    # Read first 12 bytes to verify MIME type matches extension
+    header = field.data.read(12)
+    field.data.seek(0)
+    MAGIC = {b'\xff\xd8\xff': 'jpg', b'\x89PNG': 'png', b'RIFF': 'webp'}
+    detected = None
+    for magic, mime in MAGIC.items():
+        if header.startswith(magic):
+            detected = mime
+            break
+    # gif/png/webp/jpg are all acceptable; reject if clearly not an image
+    if detected is None and ext not in {'webp'}:
+        current_app.logger.warning(f'Upload rejected: file header mismatch for {field.data.filename}')
         return None
     filename = f'{uuid.uuid4().hex[:12]}.{ext}'
     folder = os.path.join(current_app.root_path, 'static', 'images', subfolder)

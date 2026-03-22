@@ -165,3 +165,36 @@ def _build_timeline(order):
                          'desc': 'Order has been returned to the seller',
                          'state': 'done', 'time': order.updated_at})
     return timeline
+
+
+def award_loyalty_points(order):
+    """Award loyalty points for a delivered order — idempotent (safe to call multiple times)."""
+    try:
+        from models.loyalty import LoyaltyAccount, LoyaltyTransaction
+        if not order.user_id:
+            return
+        # Guard: don't award twice for the same order
+        already = LoyaltyTransaction.query.filter_by(
+            order_id=order.id, type='earn').first()
+        if already:
+            return
+        points = max(1, int(float(order.total) // 10))  # 1 point per ₹10
+        account = LoyaltyAccount.query.filter_by(user_id=order.user_id).first()
+        if not account:
+            account = LoyaltyAccount(user_id=order.user_id)
+            db.session.add(account)
+            db.session.flush()
+        account.points       += points
+        account.total_earned += points
+        account.recalculate_tier()
+        txn = LoyaltyTransaction(
+            account_id=account.id,
+            order_id=order.id,
+            type='earn',
+            points=points,
+            description=f'Earned for order {order.order_number}',
+        )
+        db.session.add(txn)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()

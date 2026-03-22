@@ -6,7 +6,13 @@
   <div class="dashboard__main">
 
     <div class="dashboard__topbar">
-      <h1>Welcome, {{ current_user.first_name }}!</h1>
+      <div>
+        <h1><span style="color:var(--primary);">👋</span> Welcome, {{ current_user.first_name }}!</h1>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-top:.2rem;">{{ comp.name }} — Seller Dashboard</p>
+      </div>
+      <a href="{{ url_for('main.seller_detail', slug=comp.slug) }}" class="btn btn--outline btn--sm" target="_blank">
+        <i class="fas fa-eye"></i> View Public Store
+      </a>
     </div>
 
     {# ── Pending Approval Banner ── #}
@@ -41,17 +47,20 @@
 
     {# ── Stats ── #}
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card stat-card--success">
+        <div class="stat-card__label"><i class="fas fa-boxes" style="color:var(--success);margin-right:.35rem;"></i>Total Products</div>
         <div class="stat-card__num">{{ stats.total_products }}</div>
-        <div class="stat-card__label">Total Products</div>
+        <div class="stat-card__sub">All listed items</div>
       </div>
       <div class="stat-card">
+        <div class="stat-card__label"><i class="fas fa-check-circle" style="color:var(--primary);margin-right:.35rem;"></i>Active Listings</div>
         <div class="stat-card__num">{{ stats.active_products }}</div>
-        <div class="stat-card__label">Active Listings</div>
+        <div class="stat-card__sub">Visible to buyers</div>
       </div>
       <div class="stat-card stat-card--warn">
+        <div class="stat-card__label"><i class="fas fa-exclamation-triangle" style="color:var(--warning);margin-right:.35rem;"></i>Out of Stock</div>
         <div class="stat-card__num">{{ stats.out_of_stock }}</div>
-        <div class="stat-card__label">Out of Stock</div>
+        <div class="stat-card__sub">Needs restocking</div>
       </div>
     </div>
 
@@ -65,6 +74,9 @@
       </a>
       <a href="{{ url_for('company.orders') }}" class="btn btn--outline">
         <i class="fas fa-receipt"></i> Orders
+      </a>
+      <a href="{{ url_for('analytics.company_analytics') }}" class="btn btn--outline">
+        <i class="fas fa-chart-line"></i> Analytics
       </a>
     </div>
 

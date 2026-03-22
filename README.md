@@ -1,182 +1,137 @@
-# 🛏️ Dube DreamWeave — Premium Bedding E-Commerce
+# FabricBazaar 🧵
 
-> **Where Comfort Meets Dreams**
+**India's Fabric Marketplace** — A multi-vendor e-commerce platform for premium Indian fabrics, sarees, bed sheets, kurtas, and home textiles.
 
 ---
 
-## ⚡ Quick Start (Windows)
+## What's Fixed in This Version
 
-### Option A — Automatic (recommended)
-Double-click `setup_windows.bat` — it creates the venv, installs everything, then run `run_windows.bat`.
+| # | Issue | Fix Applied |
+|---|-------|-------------|
+| 1 | Hardcoded Razorpay credentials in source code | All secrets moved to `.env` only — never in code |
+| 2 | Hardcoded fallback secret key | Auto-generated secure random key if not set |
+| 3 | No rate limiting on login/register | Flask-Limiter: 20 req/hr on login, 10 req/hr on register |
+| 4 | No security HTTP headers | X-Frame-Options, CSP, X-XSS-Protection, Referrer-Policy added |
+| 5 | Razorpay amount hardcoded to ₹1 (100 paise) | Now correctly uses `order.total × 100` |
+| 6 | COD available for any order value | COD blocked above ₹5,000; max 2 pending COD orders per user |
+| 7 | Delivery only covered 4 states | All 28 states + 8 UTs mapped to delivery partner emails |
+| 8 | No error pages | Custom 404, 500, 429, 403 pages |
+| 9 | No SEO meta tags | Open Graph, Twitter Card, JSON-LD structured data added |
+| 10 | No production WSGI server | Gunicorn added; `Procfile` for Render/Railway/Fly.io |
+| 11 | SQLite in production, no warning | Warning logged; PostgreSQL instructions in .env.example |
+| 12 | No `.gitignore` | `.gitignore` added — `.env` and `*.db` excluded from git |
+| 13 | Duplicate email registration crash | Graceful check before insert |
+| 14 | No production init warnings | `ProductionConfig.init_app()` warns about SQLite & missing keys |
 
-### Option B — Manual
+---
 
-```cmd
-REM 1. Create virtual environment
+## Quick Start (Local Development)
+
+```bash
+# 1. Clone / unzip
+cd marketplace
+
+# 2. Create virtual environment
 python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-REM 2. Activate it
-venv\Scripts\activate
-
-REM 3. Upgrade pip (important on Python 3.13)
-python -m pip install --upgrade pip
-
-REM 4. Install packages
+# 3. Install dependencies
 pip install -r requirements.txt
 
-REM 5. Seed the database (creates sample products + admin account)
-python seed.py
+# 4. Set up environment
+cp .env.example .env
+# Edit .env and fill in your SECRET_KEY and Razorpay test keys
 
-REM 6. Run the app
+# 5. Run
 python app.py
 ```
 
-Then open **http://localhost:5000** in your browser.
+Visit: http://localhost:5000
 
 ---
 
-## 🔑 Login Credentials
+## Production Deployment (Render / Railway / Fly.io)
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `admin@dubedreamweave.com` | `Admin@1234` |
-| Customer | `jane@example.com` | `Password@1` |
-
----
-
-## 📋 Requirements
-
-- **Python 3.10, 3.11, 3.12, or 3.13** (all supported)
-- Windows 10/11
-- Internet connection (for Google Fonts + Font Awesome CDN)
-
----
-
-## 📁 Project Structure
-
+### Environment Variables to Set
 ```
-dreamweave/
-├── app.py                  # Application factory
-├── config.py               # Configuration (dev/prod/test)
-├── extensions.py           # Flask extensions
-├── seed.py                 # Database seeder
-├── requirements.txt        # Python dependencies
-├── setup_windows.bat       # Windows auto-installer
-├── run_windows.bat         # Windows runner
-│
-├── models/                 # SQLAlchemy models
-│   ├── user.py
-│   ├── product.py
-│   ├── category.py
-│   ├── order.py
-│   └── cart.py
-│
-├── routes/                 # Flask blueprints
-│   ├── main.py             # Homepage, About, Contact, Search
-│   ├── auth.py             # Login, Register, Logout
-│   ├── shop.py             # Shop listing + product detail
-│   ├── cart.py             # Cart management
-│   ├── checkout.py         # Checkout + order confirmation
-│   └── admin.py            # Admin dashboard
-│
-├── forms/                  # WTForms
-│   ├── auth_forms.py
-│   ├── checkout_forms.py
-│   ├── contact_forms.py
-│   └── admin_forms.py
-│
-├── static/
-│   ├── css/main.css        # Full luxury styling
-│   ├── js/main.js          # Interactivity
-│   └── images/
-│       ├── hero-bg.jpg
-│       ├── about-hero.jpg
-│       ├── placeholder.jpg
-│       ├── products/       # 11 product images
-│       └── categories/     # 5 category images
-│
-└── templates/
-    ├── base.html
-    ├── index.html
-    ├── shop.html
-    ├── product_detail.html
-    ├── cart.html
-    ├── checkout.html
-    ├── order_confirmation.html
-    ├── about.html
-    ├── contact.html
-    ├── search.html
-    ├── auth/
-    │   ├── login.html
-    │   └── register.html
-    └── admin/
-        ├── dashboard.html
-        ├── products.html
-        ├── add_product.html
-        ├── edit_product.html
-        └── orders.html
+FLASK_ENV=production
+SECRET_KEY=<generate: python -c "import secrets; print(secrets.token_hex(32))">
+DATABASE_URL=postgresql://user:pass@host:5432/fabricbazaar
+RAZORPAY_KEY_ID=rzp_live_XXXXXXXXXXXXXXXX
+RAZORPAY_KEY_SECRET=XXXXXXXXXXXXXXXXXXXXXXXX
+RAZORPAY_UPI_ID=yourupihandle
 ```
 
----
-
-## 🛒 Key URLs
-
-| URL | Page |
-|-----|------|
-| `/` | Homepage |
-| `/shop` | Shop with filters |
-| `/shop/product/<slug>` | Product detail |
-| `/cart` | Shopping cart |
-| `/checkout` | Checkout |
-| `/auth/login` | Sign in |
-| `/auth/register` | Register |
-| `/admin` | Admin dashboard |
-| `/admin/products` | Manage products |
-| `/admin/orders` | Manage orders |
-
----
-
-## 🔧 Troubleshooting
-
-**"ModuleNotFoundError: No module named 'flask_sqlalchemy'"**
-```cmd
-venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-**"Pillow build error" on Python 3.13**
-```cmd
-python -m pip install --upgrade pip
-pip install Pillow==11.1.0
-```
-
-**Port already in use**
-```cmd
-REM Change port in app.py last line:
-app.run(debug=True, port=5001)
-```
-
-**Database reset**
-```cmd
-del dreamweave_dev.db
-python seed.py
-```
-
----
-
-## 🔄 Production Upgrade
-
-Switch to PostgreSQL by setting in `.env`:
-```
-DATABASE_URL=postgresql://user:password@localhost:5432/dreamweave
-```
-
-Run with Gunicorn (Linux/Mac):
+### Start Command
 ```bash
-pip install gunicorn
-gunicorn "app:create_app('production')" -w 4 -b 0.0.0.0:8000
+gunicorn "app:create_app('production')" --workers 2 --bind 0.0.0.0:$PORT --timeout 120
+```
+
+The included `Procfile` does this automatically on Render.
+
+### Database
+- **Development**: SQLite (auto-created, no setup needed)
+- **Production**: PostgreSQL strongly recommended
+  - Set `DATABASE_URL=postgresql://...` in environment
+  - Run `flask db upgrade` after first deploy
+
+---
+
+## Architecture
+
+```
+marketplace/
+├── app.py              # Application factory
+├── config.py           # Environment-aware config (dev/prod/test)
+├── extensions.py       # Flask extensions (db, login, bcrypt, limiter…)
+├── models/             # SQLAlchemy models
+│   ├── user.py         # User (customer / company / admin / delivery)
+│   ├── product.py      # Product listings
+│   ├── order.py        # Orders + tracking events
+│   ├── company.py      # Seller profiles
+│   └── …
+├── routes/             # Flask blueprints
+│   ├── auth.py         # Login, register (rate-limited)
+│   ├── shop.py         # Product listing + filters
+│   ├── checkout.py     # Cart → payment (Razorpay + COD)
+│   ├── company.py      # Seller dashboard
+│   ├── admin.py        # Admin panel
+│   └── …
+├── templates/          # Jinja2 HTML templates
+│   ├── base.html       # Master layout (SEO, security headers, navbar)
+│   ├── errors/         # 404, 500, 429, 403 pages
+│   └── …
+├── static/             # CSS, JS, images
+├── Procfile            # Gunicorn for production deployment
+├── requirements.txt    # Python dependencies
+└── .env.example        # Template for environment variables
 ```
 
 ---
 
-*Dube DreamWeave — Where Comfort Meets Dreams* 🛏️
+## User Roles
+
+| Role | Access |
+|------|--------|
+| **Customer** | Browse, buy, track orders, reviews, messages |
+| **Company** | Seller dashboard, product management, analytics |
+| **Delivery** | Assigned orders, OTP-based delivery confirmation |
+| **Admin** | Full marketplace control — verify sellers, manage all |
+
+---
+
+## Security Notes
+
+- Never commit `.env` to git — it's in `.gitignore`
+- Use **live** Razorpay keys only in production
+- Razorpay webhook signatures are verified server-side (HMAC-SHA256)
+- All forms are CSRF-protected via Flask-WTF
+- Passwords hashed with bcrypt (cost factor 12)
+- Rate limiting on auth endpoints via Flask-Limiter
+
+---
+
+## Expanding Delivery Coverage
+
+Edit the `STATE_PARTNER_EMAIL` dict in `routes/checkout.py` to map states to real delivery partner email accounts. Create the partner accounts via the Admin panel → Delivery Partners.
+

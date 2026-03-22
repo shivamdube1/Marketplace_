@@ -26,6 +26,8 @@ class SellerRating(db.Model):
     is_verified_purchase = db.Column(db.Boolean, default=False)
     is_approved          = db.Column(db.Boolean, default=True)  # Admin can hide
     created_at           = db.Column(db.DateTime, default=datetime.utcnow)
+    seller_reply         = db.Column(db.Text)
+    seller_replied_at    = db.Column(db.DateTime)
 
     # Relationships
     company = db.relationship('Company', backref=db.backref('ratings', lazy='dynamic'))
@@ -65,12 +67,3 @@ class ProductReview(db.Model):
     )
 
 
-# ── Patch: add seller_reply to both tables ────────────────────────────────────
-# Run: flask db migrate + upgrade  (or just db.create_all in dev)
-
-# Monkey-patch after class definition so Alembic picks it up cleanly:
-SellerRating.seller_reply      = db.Column(db.Text)
-SellerRating.seller_replied_at = db.Column(db.DateTime)
-
-ProductReview.seller_reply      = db.Column(db.Text)
-ProductReview.seller_replied_at = db.Column(db.DateTime)
